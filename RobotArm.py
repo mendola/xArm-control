@@ -1,5 +1,5 @@
 import serial
-
+from robo_types import ServoMotion
 from robo_state import robo_state
 from definitions import commands
 import packetmaker as pk
@@ -14,6 +14,11 @@ class RobotArm():
 
     def send(self,byte_packet):
         self.Ser.write(byte_packet)
+
+    def send_safe_motor_position_cmd(self, angle_deg_arr, time_ms_arr):
+        if not self.State.is_safe_state(angle_deg_arr):
+            angle_deg_arr = self.State.make_state_safe(angle_deg_arr)
+        self.send(pk.make_servo_cmd_move(angle_deg_arr, time_ms_arr))
 
     def handle_packet(self, command_code, packet_data):
         if command_code == commands.read_multiple_servo_positions:
@@ -68,15 +73,50 @@ class RobotArm():
 
 def main():
     xArm = RobotArm()
+    poseA = {
+        'base': 0.0,
+        'shoulder': 0.0,
+        'elbow': 0.0,
+        'wrist': 0.0,
+        'hand': 0.0,
+        'fingers': 0.0
+    }
+
+    poseB = {
+        'base': 50.0,
+        'shoulder': 50.0,
+        'elbow': 50.0,
+        'wrist': 50.0,
+        'hand': 50.0,
+        'fingers': 50.0
+    }
+
+    timingA = {
+        'base': 1000,
+        'shoulder': 1000,
+        'elbow': 1000,
+        'wrist': 1000,
+        'hand': 1000,
+        'fingers': 1000
+    }
+
+    timingB = {
+        'base': 1000,
+        'shoulder': 2000,
+        'elbow': 3000,
+        'wrist': 2000,
+        'hand': 1000,
+        'fingers': 1000
+    }
     try:
         while True:
             xArm.send(pk.make_servo_cmd_move('fingers', 1000, 50))
-            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6]))
-            time.sleep(1)
+            xArm.send(pk.make_request_servo_positions(poseA, timingA))
+            time.sleep(4)
             xArm.receive_serial()
-            xArm.send(pk.make_servo_cmd_move('fingers', 1000, 200))
+            xArm.send(pk.make_servo_cmd_move(poseB, timingB)
             xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6]))
-            time.sleep(1)
+            time.sleep(6000)
             xArm.receive_serial()
 
     except KeyboardInterrupt:
