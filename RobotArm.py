@@ -2,7 +2,7 @@ import serial
 import logging
 
 from robo_state import RobotState
-from definitions import commands
+from definitions import commands, motor_names
 from robo_utils import rotation_to_degrees
 import packetmaker as pk
 import time
@@ -31,7 +31,7 @@ class RobotArm:
         if len(packet_data) != num_servos*3 + 1:
             log.error('Packet wrong size.')
         for i in range(num_servos):
-            servo_id = packet_data[i*3 + 1]
+            servo_id = motor_names[packet_data[i*3 + 1]]
             position_dict[servo_id] = rotation_to_degrees(packet_data[i * 3 + 2] | (packet_data[i * 3 + 3] << 8))
         self.State.update_state(position_dict)
         
@@ -94,15 +94,16 @@ def main():
 
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move(poseA, time_ms=1000))
-            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
-            time.sleep(4)
-            xArm.receive_serial()
-
-           # xArm.send(pk.make_servo_cmd_move(poseB, timingB))
-           # xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
-           # time.sleep(6)
-           # xArm.receive_serial()
+            xArm.send(pk.make_servo_cmd_move(poseA, time_ms=5000))
+            for i in range(5):
+                xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
+                time.sleep(1)
+                xArm.receive_serial()
+            xArm.send(pk.make_servo_cmd_move(poseB, time_ms=5000))
+            for i in range(5):
+                xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
+                time.sleep(1)
+                xArm.receive_serial()
 
     except KeyboardInterrupt:
         print('Stopped by user')

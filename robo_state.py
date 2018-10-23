@@ -10,7 +10,7 @@ class RobotState:
         self.__dict__ = {motor: 0.0 for motor in motor_ids}
 
     def __repr__(self) -> str:
-        return '\n'.join([f'Servo {motor:<8s} : {angle:>4d}' for motor, angle in vars(self).items()])
+        return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in vars(self).items()])
 
     def update_state(self, angle_dict: dict) -> None:
         for motor, angle in angle_dict.items():
