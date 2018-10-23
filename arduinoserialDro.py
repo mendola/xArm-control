@@ -1,15 +1,9 @@
-import serial
 import struct
 from commands import commands
+from motor_id import motor_id
 import time
 import pdb
 
-motor_id = {'base' : 2,
-            'shoulder' : 4,
-            'elbow' : 3,
-            'wrist' : 5,
-            'hand' : 6,
-            'fingers' : 1}
 
 def get_high_bits(val):
         return (val & 0xFF00) >> 8
