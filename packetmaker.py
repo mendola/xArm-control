@@ -16,8 +16,8 @@ def make_servo_cmd_poweroff(joint_list: List[str]):
                 + [motor_ids[joint_name] for joint_name in joint_list]
     return bytes(command)
 
-def make_request_servo_positions(servo_id_list):
-    command = [0x55, 0x55, len(servo_id_list) + 3, commands.read_multiple_servo_positions, len(servo_id_list)] \
-                + [servo_id for servo_id in servo_id_list]
+def make_request_servo_positions(joint_list):
+    command = [0x55, 0x55, len(joint_list) + 3, commands.read_multiple_servo_positions, len(joint_list)] \
+                + [motor_ids[joint] for joint in joint_list]
     return bytes(command)
 
