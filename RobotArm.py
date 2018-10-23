@@ -3,7 +3,7 @@ import logging
 import argparse
 
 from robo_state import RobotState
-from definitions import commands, motor_names
+from definitions import commands, motor_names, joints_list
 from robo_utils import rotation_to_degrees
 import packetmaker as pk
 import time
@@ -17,10 +17,16 @@ class RobotArm:
     def send(self, byte_packet):
         self.Ser.write(byte_packet)
 
+    def send_beep_cmd(self):
+        self.send(b'\x55\x00')
+
     def send_safe_motor_position_cmd(self, angle_deg_arr, time_ms_arr):
         if not self.State.is_state_safe(angle_deg_arr):
             angle_deg_arr = self.State.make_state_safe(angle_deg_arr)
         self.send(pk.make_servo_cmd_move(angle_deg_arr, time_ms_arr))
+
+    def poweroff_servos(self):
+        self.send(pk.make_servo_cmd_poweroff(joints_list))
 
     def handle_packet(self, command_code, packet_data):
         if command_code == commands.read_multiple_servo_positions:
