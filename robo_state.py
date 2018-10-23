@@ -1,6 +1,6 @@
 import robo_serial
 
-class robo_state():
+class robo_state:
     def __init__(self):
         self.motor_angles = [0,0,0,0,0,0]
 

@@ -1,5 +1,5 @@
 import serial
-import robo_state
+from robo_state import robo_state
 import commands
 import packetmaker as pk
 
