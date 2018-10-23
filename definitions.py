@@ -17,3 +17,5 @@ commands = AttrDict({
 motor_id = AttrDict(
     {'base': 2, 'shoulder': 4, 'elbow': 3, 'wrist': 5, 'hand': 6, 'fingers': 1}
 )
+
+motor_names = {1 : 'fingers', 2: 'base', 3: 'elbow', 4: 'shoulder', 5 : 'wrist', 6 : 'hand'}
