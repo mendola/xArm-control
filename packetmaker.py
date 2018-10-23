@@ -1,4 +1,5 @@
-import commands
+from commands import commands
+from motor_id import motor_id
 
 def _get_high_bits(val):
         return (val & 0xFF00) >> 8
@@ -8,8 +9,8 @@ def _get_low_bits(val):
 
 def _make_pkt_command_servo_move(servo_id, time_ms, angle_bits):
         cmd = [0x55,0x55,0x08,commands['CMD_SERVO_MOVE'],
-               servo_id, get_low_bits(time_ms), get_high_bits(time_ms),
-               servo_id, get_low_bits(angle_bits), get_high_bits(angle_bits)]
+               servo_id, _get_low_bits(time_ms), _get_high_bits(time_ms),
+               servo_id, _get_low_bits(angle_bits), _get_high_bits(angle_bits)]
         return(bytes(cmd))
 
 def deg_to_bits(degrees):

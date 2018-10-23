@@ -1,5 +1,3 @@
-import robo_serial
-
 class robo_state:
     def __init__(self):
         self.motor_angles = [0,0,0,0,0,0]
@@ -12,6 +10,7 @@ class robo_state:
 
     def print_state(self):
         i = 0
+        print("\nUpdated State:")
         for val in self.motor_angles:
             i += 1
             print("Servo %d: %f" % (i, val))

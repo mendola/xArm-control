@@ -1,7 +1,10 @@
 import serial
+
 from robo_state import robo_state
-import commands
+from commands import commands
 import packetmaker as pk
+import time
+import pdb
 
 class RobotArm():
     def __init__(self):
@@ -9,10 +12,10 @@ class RobotArm():
         self.State = robo_state()
 
     def send(self,byte_packet):
-        self.ser.write(byte_packet)
+        self.Ser.write(byte_packet)
 
     def handle_packet(self, command_code, packet_data):
-        if command_code = commands['CMD_MULT_SERVO_POS_READ']:
+        if command_code == commands['CMD_MULT_SERVO_POS_READ']:
             self.handle_position_packet(packet_data)
     
     def handle_position_packet(self, packet_data):
@@ -25,7 +28,7 @@ class RobotArm():
             position_dict[servo_id] = (packet_data[i*3 + 2] | (packet_data[i*3 + 3] << 8))
         self.State.update_state(position_dict)
         
-    def recieve_serial(self):
+    def receive_serial(self):
         header_bytes_received = 0
         data_bytes_received = 0
         packet_started = False
@@ -33,7 +36,7 @@ class RobotArm():
         packet_command = None
         packet_data = []
         while self.Ser.inWaiting():
-            rx_byte = self.ser.read()
+            rx_byte = self.Ser.read()[0]
             if not packet_started:
                 if rx_byte == 0x55:
                     header_bytes_received += 1
@@ -42,7 +45,7 @@ class RobotArm():
                         header_bytes_received = 0
                 else:
                     header_bytes_received = 0
-            else:  # packet already started (Header recieved)
+            else:  # packet already started (Header received)
                 if data_bytes_received == 0:
                     packet_length = rx_byte
                     data_bytes_received += 1
@@ -52,8 +55,8 @@ class RobotArm():
                 else:
                     packet_data.append(rx_byte)
                     data_bytes_received += 1
-                    if data_bytes_received >= packet_length + 2:
-                        self.handle_packet(packet_commmand, packet_data)
+                    if data_bytes_received >= packet_length:
+                        self.handle_packet(packet_command, packet_data)
                         header_bytes_received = 0
                         data_bytes_received = 0
                         packet_started = False
@@ -66,12 +69,14 @@ def main():
     xArm = RobotArm()
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move('fingers',1000,50)
+            xArm.send(pk.make_servo_cmd_move('fingers',1000,50))
+            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6]))
             time.sleep(1)
             xArm.receive_serial()
-            xArm.send(pk.make_servo_cmd_move('fingers',1000,200)
+            xArm.send(pk.make_servo_cmd_move('fingers',1000,200))
+            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6]))
             time.sleep(1)
-            xArm.recieve_serial()
+            xArm.receive_serial()
 
     except KeyboardInterrupt:
         print('Stopped by user')
