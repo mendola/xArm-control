@@ -1,18 +1,19 @@
 import serial
+import logging
 
-from robo_state import robo_state
+from robo_state import RobotState
 from definitions import commands
 import packetmaker as pk
 import time
 import pdb
 
 
-class RobotArm():
+class RobotArm:
     def __init__(self):
-        self.Ser = serial.Serial('/dev/ttyACM0',9600)
-        self.State = robo_state()
+        self.Ser = serial.Serial('/dev/ttyACM0', 9600)
+        self.State = RobotState()
 
-    def send(self,byte_packet):
+    def send(self, byte_packet):
         self.Ser.write(byte_packet)
 
     def handle_packet(self, command_code, packet_data):
@@ -23,7 +24,7 @@ class RobotArm():
         position_dict = {}
         num_servos = packet_data[0]
         if len(packet_data) != num_servos*3 + 1:
-            print("Error: packet wrong size")
+            log.error('Packet wrong size.')
         for i in range(num_servos):
             servo_id = packet_data[i*3 + 1]
             position_dict[servo_id] = (packet_data[i*3 + 2] | (packet_data[i*3 + 3] << 8))
@@ -84,4 +85,8 @@ def main():
 
 
 if __name__ == '__main__':
+    log = logging.basicConfig(
+        level=logging.INFO, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
+    )
+
     main()

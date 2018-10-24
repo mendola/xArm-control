@@ -1,24 +1,31 @@
-class robo_state:
+import logging
+from definitions import motor_id
+
+log = logging.getLogger('RobotState')
+
+
+class RobotState:
+
     def __init__(self):
-        self.motor_angles = [0,0,0,0,0,0]
+        self.__dict__ = {motor: 0 for motor in motor_id}
 
-    def get_motor_angle(self, motor_id):
-        return self.motor_angles(motor_id)
-
-    def set_motor_angle(self, motor_id, angle_deg):
-        self.motor_angles[motor_id - 1] = angle_deg
-
-    def print_state(self):
-        i = 0
-        print("\nUpdated State:")
-        for val in self.motor_angles:
-            i += 1
-            print("Servo %d: %f" % (i, val))
+    def __repr__(self):
+        return '\n'.join([f'Servo {motor:<8s} : {angle:>4d}' for motor, angle in vars(self).items()])
 
     def update_state(self, angle_dict):
-        for servo_id in angle_dict.keys():
-            self.set_motor_angle(servo_id, angle_dict[servo_id])
-        self.print_state()
-
-    
-        
+        for motor, angle in angle_dict.items():
+            if not isinstance(angle, int):
+                log.warning(f'Angles must be integers. Found {repr(angle)} - type: {type(angle)}. '
+                            'Converting to int if possible.')
+                try:
+                    angle = int(angle)
+                except ValueError:
+                    continue
+            if not -120 <= angle <= 120:
+                log.error(f'Angles must be in (-120, 120). Found {angle}. Skipping assignment of {motor}.')
+                continue
+            if motor not in vars(self):
+                log.error(f'Invalid motor - {motor} not in {vars(self).keys()}. Skipping assignment.')
+                continue
+            self.__dict__[motor] = angle
+        log.debug('Updated State:\n' + str(self))

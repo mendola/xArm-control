@@ -17,10 +17,10 @@ def _make_pkt_command_servo_move(servo_id, time_ms, angle_bits):
 
 
 def deg_to_bits(degrees):
-        val = round(degrees * 1000/240)
+        val = round(degrees * 1000 / 240)
         if val > 1000:
                 val = 1000
-        if val < 0:
+        elif val < 0:
                 val = 0
         return val
 
