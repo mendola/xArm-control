@@ -1,6 +1,6 @@
 import serial
 import struct
-from commands import commands
+from definitions import commands
 
 ser = serial.Serial('/dev/ttyACM0',9600)
 

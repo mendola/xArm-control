@@ -1,10 +1,11 @@
 import serial
 
 from robo_state import robo_state
-from commands import commands
+from definitions import commands
 import packetmaker as pk
 import time
 import pdb
+
 
 class RobotArm():
     def __init__(self):
@@ -15,7 +16,7 @@ class RobotArm():
         self.Ser.write(byte_packet)
 
     def handle_packet(self, command_code, packet_data):
-        if command_code == commands['CMD_MULT_SERVO_POS_READ']:
+        if command_code == commands.read_multiple_servo_positions:
             self.handle_position_packet(packet_data)
     
     def handle_position_packet(self, packet_data):
@@ -69,17 +70,18 @@ def main():
     xArm = RobotArm()
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move('fingers',1000,50))
-            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6]))
+            xArm.send(pk.make_servo_cmd_move('fingers', 1000, 50))
+            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6]))
             time.sleep(1)
             xArm.receive_serial()
-            xArm.send(pk.make_servo_cmd_move('fingers',1000,200))
-            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6]))
+            xArm.send(pk.make_servo_cmd_move('fingers', 1000, 200))
+            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6]))
             time.sleep(1)
             xArm.receive_serial()
 
     except KeyboardInterrupt:
         print('Stopped by user')
+
 
 if __name__ == '__main__':
     main()
