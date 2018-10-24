@@ -9,15 +9,8 @@ def _get_low_bits(val):
         return val & 0xFF
 
 
-def _make_pkt_command_servo_move(servo_id, time_ms, angle_bits):
-        cmd = [0x55, 0x55, 0x08, commands.move_servo,
-               servo_id, _get_low_bits(time_ms), _get_high_bits(time_ms),
-               servo_id, _get_low_bits(angle_bits), _get_high_bits(angle_bits)]
-        return bytes(cmd)
-
-
 def deg_to_bits(degrees):
-        val = round(degrees * 1000 / 240)
+        val = round((degrees + 120.0) * 1000.0 / 240.0)
         if val > 1000:
                 val = 1000
         elif val < 0:
@@ -26,8 +19,16 @@ def deg_to_bits(degrees):
 
 
 def make_servo_cmd_move(joint_name, time_ms, angle_deg):
-        pkt = _make_pkt_command_servo_move(motor_id[joint_name], time_ms, deg_to_bits(angle_deg))
-        return pkt
+        cmd = [0x55, 0x55, 2 + 6*len(degree_dict), commands.move_servo]
+        for servo_key in degree_dict.keys():
+                servo_id = motor_id[servo_key]
+                angle_bits = deg_to_bits(degree_dict[servo_key])
+                time_ms = ms_dict[servo_key]
+                cmd += [
+                servo_id, _get_low_bits(time_ms), _get_high_bits(time_ms),
+                servo_id, _get_low_bits(angle_bits), _get_high_bits(angle_bits)
+                ]
+        return bytes(cmd)
 
 
 def make_request_servo_positions(servo_id_list):
