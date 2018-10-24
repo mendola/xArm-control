@@ -2,7 +2,6 @@ import serial
 import logging
 
 from robo_state import RobotState
-from robo_types import ServoMotion
 from definitions import commands
 import packetmaker as pk
 import time
@@ -76,8 +75,8 @@ class RobotArm:
 def main():
     xArm = RobotArm()
     poseA = {
-        'base': 0.0,
-        'shoulder': 0.0,
+    #    'base': 0.0,
+    #    'shoulder': 0.0,
         'elbow': 0.0,
         'wrist': 0.0,
         'hand': 0.0,
@@ -85,8 +84,8 @@ def main():
     }
 
     poseB = {
-        'base': 50.0,
-        'shoulder': 50.0,
+    #    'base': 50.0,
+    #    'shoulder': 50.0,
         'elbow': 50.0,
         'wrist': 50.0,
         'hand': 50.0,
@@ -94,8 +93,8 @@ def main():
     }
 
     timingA = {
-        'base': 1000,
-        'shoulder': 1000,
+    #    'base': 1000,
+    #    'shoulder': 1000,
         'elbow': 1000,
         'wrist': 1000,
         'hand': 1000,
@@ -103,8 +102,8 @@ def main():
     }
 
     timingB = {
-        'base': 1000,
-        'shoulder': 2000,
+    #    'base': 1000,
+    #    'shoulder': 2000,
         'elbow': 3000,
         'wrist': 2000,
         'hand': 1000,
@@ -112,14 +111,15 @@ def main():
     }
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move('fingers', 1000, 50))
-            xArm.send(pk.make_request_servo_positions(poseA, timingA))
+            xArm.send(pk.make_servo_cmd_move(poseA, timingA))
+            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6,7]))
             time.sleep(4)
             xArm.receive_serial()
-            xArm.send(pk.make_servo_cmd_move(poseB, timingB))
-            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6]))
-            time.sleep(6000)
-            xArm.receive_serial()
+
+           # xArm.send(pk.make_servo_cmd_move(poseB, timingB))
+           # xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
+           # time.sleep(6)
+           # xArm.receive_serial()
 
     except KeyboardInterrupt:
         print('Stopped by user')

@@ -18,7 +18,7 @@ def deg_to_bits(degrees):
         return val
 
 
-def make_servo_cmd_move(joint_name, time_ms, angle_deg):
+def make_servo_cmd_move(degree_dict, ms_dict):
         cmd = [0x55, 0x55, 2 + 6*len(degree_dict), commands.move_servo]
         for servo_key in degree_dict.keys():
                 servo_id = motor_id[servo_key]
