@@ -3,7 +3,7 @@ import logging
 
 from robo_state import RobotState
 from definitions import commands
-from robo_utils import bits_to_deg
+from robo_utils import rotation_to_degrees
 import packetmaker as pk
 import time
 
@@ -32,7 +32,7 @@ class RobotArm:
             log.error('Packet wrong size.')
         for i in range(num_servos):
             servo_id = packet_data[i*3 + 1]
-            position_dict[servo_id] = bits_to_deg(packet_data[i*3 + 2] | (packet_data[i*3 + 3] << 8))
+            position_dict[servo_id] = rotation_to_degrees(packet_data[i * 3 + 2] | (packet_data[i * 3 + 3] << 8))
         self.State.update_state(position_dict)
         
     def receive_serial(self):
@@ -92,27 +92,10 @@ def main():
         'fingers': 50.0
     }
 
-    timingA = {
-    #    'base': 1000,
-    #    'shoulder': 1000,
-        'elbow': 1000,
-        'wrist': 1000,
-        'hand': 1000,
-        'fingers': 1000
-    }
-
-    timingB = {
-    #    'base': 1000,
-    #    'shoulder': 2000,
-        'elbow': 3000,
-        'wrist': 2000,
-        'hand': 1000,
-        'fingers': 1000
-    }
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move(poseA, timingA))
-            xArm.send(pk.make_request_servo_positions([1,2,3,4,5,6,7]))
+            xArm.send(pk.make_servo_cmd_move(poseA, time_ms=1000))
+            xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
             time.sleep(4)
             xArm.receive_serial()
 

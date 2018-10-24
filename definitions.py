@@ -14,8 +14,5 @@ commands = AttrDict({
     'read_multiple_servo_positions': 21
 })
 
-motor_id = AttrDict(
-    {'base': 2, 'shoulder': 4, 'elbow': 3, 'wrist': 5, 'hand': 6, 'fingers': 1}
-)
-
-motor_names = {1 : 'fingers', 2: 'base', 3: 'elbow', 4: 'shoulder', 5 : 'wrist', 6 : 'hand'}
+motor_ids = AttrDict({'base': 2, 'shoulder': 4, 'elbow': 3, 'wrist': 5, 'hand': 6, 'fingers': 1})
+motor_names = [None, ] + [name for name, _ in sorted(motor_ids.items(), key=lambda pair: pair[1])]

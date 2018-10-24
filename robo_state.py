@@ -1,18 +1,18 @@
 import logging
-from definitions import motor_id
+from definitions import motor_ids
 
 log = logging.getLogger('RobotState')
 
 
 class RobotState:
 
-    def __init__(self):
-        self.__dict__ = {motor: 0.0 for motor in motor_id}
+    def __init__(self) -> None:
+        self.__dict__ = {motor: 0.0 for motor in motor_ids}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '\n'.join([f'Servo {motor:<8s} : {angle:>4d}' for motor, angle in vars(self).items()])
 
-    def update_state(self, angle_dict):
+    def update_state(self, angle_dict: dict) -> None:
         for motor, angle in angle_dict.items():
             if not isinstance(angle, (float, int)):
                 log.warning(f'Angles must be floats. Found {repr(angle)} - type: {type(angle)}.')
