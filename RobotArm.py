@@ -5,7 +5,6 @@ from robo_state import RobotState
 from definitions import commands
 import packetmaker as pk
 import time
-import pdb
 
 
 class RobotArm:
@@ -127,7 +126,7 @@ def main():
 
 if __name__ == '__main__':
     log = logging.basicConfig(
-        level=logging.INFO, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
+        level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
     )
 
     main()
