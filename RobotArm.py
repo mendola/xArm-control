@@ -3,6 +3,7 @@ import logging
 
 from robo_state import RobotState
 from definitions import commands
+from robo_utils import bits_to_deg
 import packetmaker as pk
 import time
 
@@ -31,7 +32,7 @@ class RobotArm:
             log.error('Packet wrong size.')
         for i in range(num_servos):
             servo_id = packet_data[i*3 + 1]
-            position_dict[servo_id] = (packet_data[i*3 + 2] | (packet_data[i*3 + 3] << 8))
+            position_dict[servo_id] = bits_to_deg(packet_data[i*3 + 2] | (packet_data[i*3 + 3] << 8))
         self.State.update_state(position_dict)
         
     def receive_serial(self):
