@@ -1,5 +1,6 @@
 import serial
 import logging
+import argparse
 
 from robo_state import RobotState
 from definitions import commands, motor_names
@@ -17,7 +18,7 @@ class RobotArm:
         self.Ser.write(byte_packet)
 
     def send_safe_motor_position_cmd(self, angle_deg_arr, time_ms_arr):
-        if not self.State.is_safe_state(angle_deg_arr):
+        if not self.State.is_state_safe(angle_deg_arr):
             angle_deg_arr = self.State.make_state_safe(angle_deg_arr)
         self.send(pk.make_servo_cmd_move(angle_deg_arr, time_ms_arr))
 
@@ -113,5 +114,11 @@ if __name__ == '__main__':
     log = logging.basicConfig(
         level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
     )
+
+    # Template of ArgParse.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-flag', '--long-flag', nargs="number of args", type="type-of-args",
+                        default="default-value", help="help-string", )
+    args = parser.parse_args()
 
     main()

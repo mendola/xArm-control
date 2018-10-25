@@ -25,3 +25,9 @@ class RobotState:
                 continue
             self.__dict__[motor] = angle
         log.debug('Updated State:\n' + str(self))
+
+    def is_state_safe(self, *args):
+        raise NotImplementedError
+
+    def make_state_safe(self, *args):
+        raise NotImplementedError
