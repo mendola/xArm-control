@@ -1,5 +1,7 @@
 import logging
-from definitions import motor_ids
+from numpy.linalg import norm
+from typing import Dict, Iterable
+from definitions import motor_names
 
 log = logging.getLogger('RobotState')
 
@@ -7,10 +9,16 @@ log = logging.getLogger('RobotState')
 class RobotState:
 
     def __init__(self) -> None:
-        self.__dict__ = {motor: 0.0 for motor in motor_ids}
+        self.__dict__: Dict[float] = {motor: 0.0 for motor in motor_names[1:]}
 
     def __repr__(self) -> str:
         return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in vars(self).items()])
+
+    def __iter__(self) -> Iterable[float]:
+        [(yield self.__dict__[motor]) for motor in motor_names[1:]]
+
+    def __eq__(self, other) -> bool:
+        return norm([this - that for this, that in zip(self, other)]) < 2
 
     def update_state(self, angle_dict: dict) -> None:
         for motor, angle in angle_dict.items():

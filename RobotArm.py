@@ -3,7 +3,7 @@ import logging
 import argparse
 
 from robo_state import RobotState
-from definitions import commands, motor_names, joints_list
+from definitions import commands, motor_names
 from robo_utils import rotation_to_degrees
 import packetmaker as pk
 import time
@@ -26,7 +26,7 @@ class RobotArm:
         self.send(pk.make_servo_cmd_move(angle_deg_arr, time_ms_arr))
 
     def poweroff_servos(self):
-        self.send(pk.make_servo_cmd_poweroff(joints_list))
+        self.send(pk.make_servo_cmd_poweroff())
 
     def handle_packet(self, command_code, packet_data):
         if command_code == commands.read_multiple_servo_positions:
@@ -103,12 +103,12 @@ def main():
         while True:
             xArm.send(pk.make_servo_cmd_move(poseA, time_ms=5000))
             for i in range(5):
-                xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
+                xArm.send(pk.make_request_servo_positions())
                 time.sleep(1)
                 xArm.receive_serial()
             xArm.send(pk.make_servo_cmd_move(poseB, time_ms=5000))
             for i in range(5):
-                xArm.send(pk.make_request_servo_positions([1, 2, 3, 4, 5, 6, 7]))
+                xArm.send(pk.make_request_servo_positions())
                 time.sleep(1)
                 xArm.receive_serial()
 
