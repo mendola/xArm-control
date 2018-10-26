@@ -79,7 +79,8 @@ class RobotArm:
                         packet_data = []
 
     def request_positions(self):
-        self.send(pk.make_request_servo_positions(joints_list))
+        self.send(pk.make_request_servo_positions())
+
 
 def main():
     xArm = RobotArm()

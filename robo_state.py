@@ -12,10 +12,19 @@ class RobotState:
         self.__dict__: Dict[float] = {motor: 0.0 for motor in motor_names[1:]}
 
     def __repr__(self) -> str:
-        return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in vars(self).items()])
+        return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in self.items()])
+
+    def keys(self):
+        return self.__dict__.keys()
+
+    def items(self):
+        yield from vars(self).items()
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     def __iter__(self) -> Iterable[float]:
-        [(yield self.__dict__[motor]) for motor in motor_names[1:]]
+        yield from [getattr(self, motor) for motor in motor_names[1:]]
 
     def __eq__(self, other) -> bool:
         return norm([this - that for this, that in zip(self, other)]) < 2

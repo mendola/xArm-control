@@ -1,19 +1,23 @@
-from RobotArm import RobotArm
 import time
-from copy import deepcopy
+import logging
 from math import sqrt
+from copy import deepcopy
+
+from RobotArm import RobotArm
 
 deviation_threshold = 3
 threshold_save_s = 5
 
+
 def state_differs(stateA, stateB):
-    if stateA == None or stateB == None:
+    if stateA is None or stateB is None:
         return False
 
     total_deviation = 0
     for key in stateA.__dict__.keys():
         total_deviation += (stateA.__dict__[key] - stateB.__dict__[key]) ** 2
     return sqrt(total_deviation) > deviation_threshold
+
 
 class MotionRecorder:
     def __init__(self):
@@ -46,23 +50,26 @@ class MotionRecorder:
                 if state_differs(self.xArm.State, most_recent_changed_state):
                     most_recent_changed_state = deepcopy(self.xArm.State)
                     time_last_state_change = curr_time
-                    print("State Changed")
+                    log.info("State Changed")
                 if curr_time - time_last_state_change > threshold_save_s:
                     self.pose_queue.append(most_recent_changed_state)
                     time_last_state_change = curr_time
                     most_recent_changed_state = deepcopy(self.xArm.State)
                     self.xArm.send_beep_cmd()
-                    print("State saved")
+                    log.info("State saved")
 
             except KeyboardInterrupt:
                 break
         print(self.pose_queue)
+
 
 def main():
     Recorder = MotionRecorder()
     Recorder.run_recorder()
 
 
-
 if __name__ == '__main__':
+    log = logging.basicConfig(
+        level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
+    )
     main()

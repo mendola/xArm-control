@@ -7,13 +7,11 @@ from robo_utils import *
 
 def with_header(func: Callable[..., bytes]) -> Callable:
     """ Prepends the [0x55, 0x55] heading to messages. """
-
     @wraps
     def decorator(*args, **kwargs):
         header: bytes = bytes([0x55, 0x55])
         message: bytes = func(*args, **kwargs)
         return header + message
-
     return decorator
 
 
@@ -42,6 +40,7 @@ def make_servo_cmd_poweroff(joint_list: List[str] = motor_names[1:]) -> bytes:
     :param joint_list: List of joints to reset. (Defaults to all motors.)
     :return: String of bytes.
     """
+    # [ length-of-message, command, number-of-servos, duration (2 bytes) ]
     command = [3 + len(joint_list), 0x14, len(joint_list)] + [motor_ids[joint_name] for joint_name in joint_list]
     return bytes(command)
 
