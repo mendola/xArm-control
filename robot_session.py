@@ -20,14 +20,11 @@ class RobotSession(cmd.Cmd):
         super().__init__()
 
     def do_move(self, line: str):
-        f"""
-            Move the arm to the position specified.
-            Provide space separated angle for each motor: {', '.join(motor_names[1:])}
-        """
+        """ Move the arm to the position specified. Provide space separated angle for each motor. """
         angles: List[float] = [float(angle) for angle in line.split(' ')]
         assert len(angles) == len(motor_ids), f"Must input an angle for each motor: {motor_names[1:]}"
 
-        degrees_dict: Dict[str, float] = {motor: angle for motor, angle in zip(motor_names, angles)}
+        degrees_dict: Dict[str, float] = {motor: angle for motor, angle in zip(motor_names[1:], angles)}
         self.arm.send(pk.write_servo_move(degrees_dict, 500))
         self.locked = True
 
@@ -36,6 +33,11 @@ class RobotSession(cmd.Cmd):
         self.arm.request_positions()
         sleep(0.1)
         self.arm.receive_serial()
+        print(self.arm.State)
+
+    def do_exit(self, _line: str) -> bool:
+        """ Exit CLI. """
+        return True
 
     def default(self, line: str):
         print(f'*** Command <{line}> not recognized ***')
