@@ -44,24 +44,15 @@ class RobotArm:
         """
         motor_count: int = packet_data[0]
         position_data: bytes = packet_data[1:]
-        if len(position_data) != motor_count * 3:
-            self.log.error('Packet wrong size.')
-            # TODO: Raise error? Assert?
 
-        position_dict: Dict[str, float] = \
-            {motor_names[motor_id]: rotation_to_degrees(angle_byte_1 | (angle_byte_2 << 8))
-             for motor_id, angle_byte_1, angle_byte_2 in zip(*[iter(position_data)] * 3)}
-
-        # try:
-        #     assert len(position_data) == motor_count * 3
-        #     position_dict: Dict[str, float] = \
-        #         {motor_names[motor_id]: rotation_to_degrees(angle_byte_1 | (angle_byte_2 << 8))
-        #          for motor_id, angle_byte_1, angle_byte_2 in zip(*[iter(position_data)] * 3)}
-        #     self.State.update_state(position_dict)
-        # except AssertionError:
-        #     self.log.error('Invalid packet - Wrong size: {packet_data}. Skipping state update.')
-
-        self.State.update_state(position_dict)
+        try:
+            assert len(position_data) == motor_count * 3
+            position_dict: Dict[str, float] = \
+                {motor_names[motor_id]: rotation_to_degrees(angle_byte_1 | (angle_byte_2 << 8))
+                 for motor_id, angle_byte_1, angle_byte_2 in zip(*[iter(position_data)] * 3)}
+            self.State.update_state(position_dict)
+        except AssertionError:
+            self.log.error('Invalid packet - Wrong size: {packet_data}. Skipping state update.')
         
     def receive_serial(self):
         header_bytes_received = 0
