@@ -9,7 +9,7 @@ log = logging.getLogger('RobotState')
 class RobotState:
 
     def __init__(self) -> None:
-        self.__dict__: Dict[float] = {motor: 0.0 for motor in motor_names[1:]}
+        self.__dict__: Dict[str, float] = {motor: 0.0 for motor in motor_names[1:]}
 
     def __repr__(self) -> str:
         return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in self.items()])
@@ -27,9 +27,9 @@ class RobotState:
         yield from [getattr(self, motor) for motor in motor_names[1:]]
 
     def __eq__(self, other) -> bool:
-        return norm([this - that for this, that in zip(self, other)]) < 2
+        return norm([this - that for this, that in zip(self, other)]) < 2  # type: ignore
 
-    def update_state(self, angle_dict: dict) -> None:
+    def update_state(self, angle_dict: Dict[str, float]) -> None:
         for motor, angle in angle_dict.items():
             if not isinstance(angle, (float, int)):
                 log.warning(f'Angles must be floats. Found {repr(angle)} - type: {type(angle)}.')

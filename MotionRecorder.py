@@ -23,6 +23,7 @@ class MotionRecorder:
     def __init__(self):
         self.xArm = RobotArm()
         self.pose_queue = []
+        self.log = logging.getLogger("MotionRecorder")
 
     def try_update_state(self):
         self.xArm.request_positions()
@@ -37,7 +38,7 @@ class MotionRecorder:
 
     def run_recorder(self):
         for i in range(3):
-            self.xArm.poweroff_servos()
+            self.xArm.unlock_servos()
             time.sleep(1)
 
         time_last_state_change = time.time()
@@ -50,13 +51,13 @@ class MotionRecorder:
                 if state_differs(self.xArm.State, most_recent_changed_state):
                     most_recent_changed_state = deepcopy(self.xArm.State)
                     time_last_state_change = curr_time
-                    log.info("State Changed")
+                    self.log.info("State Changed")
                 if curr_time - time_last_state_change > threshold_save_s:
                     self.pose_queue.append(most_recent_changed_state)
                     time_last_state_change = curr_time
                     most_recent_changed_state = deepcopy(self.xArm.State)
-                    self.xArm.send_beep_cmd()
-                    log.info("State saved")
+                    self.xArm.send_beep()
+                    self.log.info("State saved")
 
             except KeyboardInterrupt:
                 break
@@ -69,7 +70,7 @@ def main():
 
 
 if __name__ == '__main__':
-    log = logging.basicConfig(
+    logging.basicConfig(
         level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
     )
     main()

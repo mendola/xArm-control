@@ -7,7 +7,7 @@ from robo_utils import *
 
 def with_header(func: Callable[..., bytes]) -> Callable:
     """ Prepends the [0x55, 0x55] heading to messages. """
-    @wraps
+    @wraps(func)
     def decorator(*args, **kwargs):
         header: bytes = bytes([0x55, 0x55])
         message: bytes = func(*args, **kwargs)
@@ -16,7 +16,7 @@ def with_header(func: Callable[..., bytes]) -> Callable:
 
 
 @with_header
-def make_servo_cmd_move(degree_dict: Dict[str, float], time_ms: int) -> bytes:
+def write_servo_move(degree_dict: Dict[str, float], time_ms: int) -> bytes:
     """
         Write the move command for multiple servo motors.
     :param degree_dict: Dict {motor_name: degrees} of angular position for the servo motors.
@@ -34,7 +34,7 @@ def make_servo_cmd_move(degree_dict: Dict[str, float], time_ms: int) -> bytes:
 
 
 @with_header
-def make_servo_cmd_poweroff(joint_list: List[str] = motor_names[1:]) -> bytes:
+def write_servo_unlock(joint_list: List[str] = motor_names[1:]) -> bytes:
     """
         Writes the command to reset the motors for a new command.
     :param joint_list: List of joints to reset. (Defaults to all motors.)
@@ -46,10 +46,10 @@ def make_servo_cmd_poweroff(joint_list: List[str] = motor_names[1:]) -> bytes:
 
 
 @with_header
-def make_request_servo_positions(joint_list: List[str] = motor_names[1:]) -> bytes:
+def write_request_positions(joint_list: List[str] = motor_names[1:]) -> bytes:
     """
         Writes the command which requests the position of the motors.
-    :param joint_list: List of joints to query.
+    :param joint_list: List of joints to query. (Defaults to all motors.)
     :return: String of bytes.
     """
     command = [len(joint_list) + 3, commands.read_multiple_servo_positions, len(joint_list)]

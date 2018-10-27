@@ -1,3 +1,4 @@
 attrdict == 2.0.0
 numpy >= 1.15.0
-serial==0.0.69
+pyserial==3.4
+snapshottest==0.5.0

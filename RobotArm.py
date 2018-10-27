@@ -1,45 +1,66 @@
-import serial
 import logging
 import argparse
+from time import sleep
+from typing import Dict
+from itertools import count
+from serial import Serial
 
 from robo_state import RobotState
 from definitions import commands, motor_names
 from robo_utils import rotation_to_degrees
 import packetmaker as pk
-import time
 
 
 class RobotArm:
-    def __init__(self):
-        self.Ser = serial.Serial('/dev/ttyACM0', 9600)
-        self.State = RobotState()
+    counter = count(0)
 
-    def send(self, byte_packet):
+    def __init__(self):
+        self.Ser: Serial = Serial('/dev/ttyACM0', 9600)
+        self.State: RobotState = RobotState()
+        self.log = logging.getLogger(f'RobotArm{next(self.counter)}')
+
+    def send(self, byte_packet: bytes):
         self.Ser.write(byte_packet)
 
-    def send_beep_cmd(self):
+    def send_beep(self):
         self.send(b'\x55\x00')
 
-    def send_safe_motor_position_cmd(self, angle_deg_arr, time_ms_arr):
-        if not self.State.is_state_safe(angle_deg_arr):
-            angle_deg_arr = self.State.make_state_safe(angle_deg_arr)
-        self.send(pk.make_servo_cmd_move(angle_deg_arr, time_ms_arr))
+    def send_safe_motor_position_cmd(self, degree_dict: Dict[str, float], time_ms: int):
+        if not self.State.is_state_safe(degree_dict):
+            degree_dict = self.State.make_state_safe(degree_dict)
+        self.send(pk.write_servo_move(degree_dict, time_ms))
 
-    def poweroff_servos(self):
-        self.send(pk.make_servo_cmd_poweroff())
+    def unlock_servos(self):
+        self.send(pk.write_servo_unlock())
 
-    def handle_packet(self, command_code, packet_data):
+    def handle_packet(self, command_code: int, packet_data: bytes):
         if command_code == commands.read_multiple_servo_positions:
             self.handle_position_packet(packet_data)
     
-    def handle_position_packet(self, packet_data):
-        position_dict = {}
-        num_servos = packet_data[0]
-        if len(packet_data) != num_servos*3 + 1:
-            log.error('Packet wrong size.')
-        for i in range(num_servos):
-            servo_id = motor_names[packet_data[i*3 + 1]]
-            position_dict[servo_id] = rotation_to_degrees(packet_data[i * 3 + 2] | (packet_data[i * 3 + 3] << 8))
+    def handle_position_packet(self, packet_data: bytes):
+        """
+            Parse a packet of position information and update the state of the robot arm.
+        :param packet_data: Byte-message of position information
+        """
+        motor_count: int = packet_data[0]
+        position_data: bytes = packet_data[1:]
+        if len(position_data) != motor_count * 3:
+            self.log.error('Packet wrong size.')
+            # TODO: Raise error? Assert?
+
+        position_dict: Dict[str, float] = \
+            {motor_names[motor_id]: rotation_to_degrees(angle_byte_1 | (angle_byte_2 << 8))
+             for motor_id, angle_byte_1, angle_byte_2 in zip(*[iter(position_data)] * 3)}
+
+        # try:
+        #     assert len(position_data) == motor_count * 3
+        #     position_dict: Dict[str, float] = \
+        #         {motor_names[motor_id]: rotation_to_degrees(angle_byte_1 | (angle_byte_2 << 8))
+        #          for motor_id, angle_byte_1, angle_byte_2 in zip(*[iter(position_data)] * 3)}
+        #     self.State.update_state(position_dict)
+        # except AssertionError:
+        #     self.log.error('Invalid packet - Wrong size: {packet_data}. Skipping state update.')
+
         self.State.update_state(position_dict)
         
     def receive_serial(self):
@@ -79,7 +100,7 @@ class RobotArm:
                         packet_data = []
 
     def request_positions(self):
-        self.send(pk.make_request_servo_positions())
+        self.send(pk.write_request_positions())
 
 
 def main():
@@ -104,15 +125,15 @@ def main():
 
     try:
         while True:
-            xArm.send(pk.make_servo_cmd_move(poseA, time_ms=5000))
+            xArm.send(pk.write_servo_move(poseA, time_ms=5000))
             for i in range(5):
-                xArm.send(pk.make_request_servo_positions())
-                time.sleep(1)
+                xArm.send(pk.write_request_positions())
+                sleep(1)
                 xArm.receive_serial()
-            xArm.send(pk.make_servo_cmd_move(poseB, time_ms=5000))
+            xArm.send(pk.write_servo_move(poseB, time_ms=5000))
             for i in range(5):
-                xArm.send(pk.make_request_servo_positions())
-                time.sleep(1)
+                xArm.send(pk.write_request_positions())
+                sleep(1)
                 xArm.receive_serial()
 
     except KeyboardInterrupt:
@@ -120,14 +141,13 @@ def main():
 
 
 if __name__ == '__main__':
-    log = logging.basicConfig(
+    logging.basicConfig(
         level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
     )
 
     # Template of ArgParse.
     parser = argparse.ArgumentParser()
-    parser.add_argument('-flag', '--long-flag', nargs="number of args", type="type-of-args",
-                        default="default-value", help="help-string", )
+    parser.add_argument()
     args = parser.parse_args()
 
     main()
