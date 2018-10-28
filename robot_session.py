@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import cmd
+from os import system
 from time import sleep
 from typing import Dict, List
 
@@ -28,6 +29,12 @@ class RobotSession(cmd.Cmd):
         self.arm.send(pk.write_servo_move(degrees_dict, 500))
         self.locked = True
 
+    @staticmethod
+    def help_move():
+        print(f'Move the arm to the position specified. '
+              f'Provide space separated angle for each motor: '
+              f'{", ".join(motor_names[1:])}')
+
     def do_poll(self, _line: str):
         """ Poll the position of each motor. """
         self.arm.request_positions()
@@ -35,7 +42,13 @@ class RobotSession(cmd.Cmd):
         self.arm.receive_serial()
         print(self.arm.State)
 
-    def do_exit(self, _line: str) -> bool:
+    @staticmethod
+    def do_shell(shell_command: str):
+        """ Run a shell command. (! shell_command) """
+        system(shell_command)
+
+    @staticmethod
+    def do_exit(_line: str) -> bool:
         """ Exit CLI. """
         return True
 
