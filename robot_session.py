@@ -65,6 +65,12 @@ class RobotSession(cmd.Cmd):
         system(shell_command)
 
     @staticmethod
+    def do_EOF(_line: str) -> bool:  # pragma: no cover
+        """ Exit CLI. """
+        print()
+        return True
+
+    @staticmethod
     def do_exit(_line: str) -> bool:  # pragma: no cover
         """ Exit CLI. """
         return True
@@ -74,7 +80,10 @@ class RobotSession(cmd.Cmd):
 
 
 def main():  # pragma: no cover
-    RobotSession().cmdloop()
+    try:
+        RobotSession().cmdloop()
+    except KeyboardInterrupt:
+        print()
 
 
 if __name__ == '__main__':
