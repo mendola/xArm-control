@@ -1,9 +1,10 @@
 import logging
-import argparse
+from os import path
 from time import sleep
 from typing import Dict
 from itertools import count
 from serial import Serial
+from serial.serialutil import SerialException
 
 from robo_state import RobotState
 from definitions import commands, motor_names
@@ -15,9 +16,14 @@ class RobotArm:
     counter = count(0)
 
     def __init__(self):
-        self.Ser: Serial = Serial('/dev/ttyACM0', 9600)
-        self.State: RobotState = RobotState()
         self.log = logging.getLogger(f'RobotArm{next(self.counter)}')
+        self.State: RobotState = RobotState()
+
+        try:
+            self.Ser: Serial = Serial('/dev/ttyACM0', 9600)
+        except SerialException:
+            self.log.warning('Failed to establish Serial connection.')
+
 
     def send(self, byte_packet: bytes):
         self.Ser.write(byte_packet)
@@ -132,13 +138,6 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
-    )
-
-    # Template of ArgParse.
-    parser = argparse.ArgumentParser()
-    parser.add_argument()
-    args = parser.parse_args()
-
+    logging.basicConfig(level=logging.DEBUG,
+                        format=f'[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s')
     main()
