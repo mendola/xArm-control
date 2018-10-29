@@ -1,5 +1,6 @@
 import mock
 import snapshottest
+from cmd2 import Statement
 from sys import stdin, stdout
 
 from robot_session import RobotSession
@@ -22,36 +23,45 @@ class TestRobotSession(snapshottest.TestCase):
     def test_poll(self, mocked_print):
         """ Test that poll returns expected results. """
         # Arrange
+        no_serial_session = RobotSession()
         session = self.create()
 
         # Act
-        session.do_poll('')
+        no_serial_session.do_poll(Statement(''))
+        session.do_poll(Statement(''))
 
         # Assert
+        self.assertTrue(len(mocked_print.call_args_list) == 1)
         self.assertMatchSnapshot(str(mocked_print.call_args_list[0]))
 
     def test_move(self):
         """ Test that move sends the expected command. """
         # Arrange
+        no_serial_session = RobotSession()
         session = self.create()
-        move_command = "100 50 10 -30 -110 0"
+        move_command = Statement("100 50 10 -30 -110 0")
 
         # Act
+        no_serial_session.do_move(move_command)
         session.do_move(move_command)
 
         # Assert
+        self.assertTrue(len(session.arm.Ser.write.call_args_list) == 1)
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[0]))
 
     def test_unlock(self):
         """ Test that unlock sends the expected command. """
         # Arrange
+        no_serial_session = RobotSession()
         session = self.create()
-        unlock_command = "fingers base shoulder"
+        unlock_command = Statement("fingers base shoulder")
 
         # Act
-        session.do_unlock('')
+        no_serial_session.do_unlock(Statement(''))
+        session.do_unlock(Statement(''))
         session.do_unlock(unlock_command)
 
         # Assert
+        self.assertTrue(len(session.arm.Ser.write.call_args_list) == 2)
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[0]))
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[1]))

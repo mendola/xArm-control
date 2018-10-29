@@ -24,9 +24,12 @@ class RobotArm:
         except SerialException:
             self.log.warning('Failed to establish Serial connection.')
 
-
     def send(self, byte_packet: bytes):
-        self.Ser.write(byte_packet)
+        try:
+            self.Ser.write(byte_packet)
+        except AttributeError:
+            self.log.error('Serial connection was not established at initialization. Cannot send nor receive data.')
+            raise RuntimeError
 
     def send_beep(self):
         self.send(b'\x55\x00')
@@ -61,6 +64,10 @@ class RobotArm:
             self.log.error('Invalid packet - Wrong size: {packet_data}. Skipping state update.')
         
     def receive_serial(self):
+        if not hasattr(self, 'Ser'):
+            self.log.error('Serial connection was not established at initialization. Cannot send nor receive data.')
+            raise RuntimeError
+
         header_bytes_received = 0
         data_bytes_received = 0
         packet_started = False

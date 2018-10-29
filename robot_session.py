@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-import cmd
 import sys
-from os import system
+import cmd2
 from time import sleep
 from typing import Dict, List
+from cmd2 import Statement
 
 from definitions import motor_ids, motor_names
 import packetmaker as pk
@@ -12,71 +12,73 @@ import packetmaker as pk
 from RobotArm import RobotArm
 
 
-class RobotSession(cmd.Cmd):
+class RobotSession(cmd2.Cmd):
     intro: str = 'xArm Session initiated. Enter <help> or <?> to list commands. \n'
-    prompt: str = 'Input Command: '
+    prompt: str = ' (xArm) '
 
     def __init__(self, stdin=sys.stdin, stdout=sys.stdout) -> None:
         self.arm: RobotArm = RobotArm()
         super().__init__(stdin=stdin, stdout=stdout)
 
-    def do_poll(self, _line: str):
+    def do_poll(self, _statement: Statement):
         """ Poll the position of each motor. """
-        self.arm.request_positions()
-        sleep(0.1)
-        self.arm.receive_serial()
-        print(self.arm.State)
+        try:
+            self.arm.request_positions()
+            sleep(0.1)
+            self.arm.receive_serial()
+            print(self.arm.State)
+        except RuntimeError:
+            pass
 
-    def do_move(self, line: str):
+    def do_move(self, statement: Statement):
         """ Move the arm to the position specified. Provide space separated angle for each motor. """
-        angles: List[float] = [float(angle) for angle in line.split(' ')]
+        angles: List[float] = [float(angle) for angle in statement.args.split(' ')]
         assert len(angles) == len(motor_ids), f"Must input an angle for each motor: {motor_names[1:]}"
 
         degrees_dict: Dict[str, float] = {motor: angle for motor, angle in zip(motor_names[1:], angles)}
-        self.arm.send(pk.write_servo_move(degrees_dict, 500))
+        try:
+            self.arm.send(pk.write_servo_move(degrees_dict, 500))
+        except RuntimeError:
+            pass
 
     @staticmethod
     def help_move():  # pragma: no cover
-        print(f'Move the arm to the position specified. '
-              f'Provide space separated angle for each motor: '
-              f'{", ".join(motor_names[1:])}')
+        print(f'Move the arm to the position specified.\n'
+              f'Provide space separated angle for each of the following:\n'
+              f'  ({", ".join(motor_names[1:])})')
 
-    def do_unlock(self, line: str):
+    def do_unlock(self, statement: Statement):
         """ Unlock servo motors. """
-        input_motors: List[str] = [motor for motor in line.split()]
+        input_motors: List[str] = [motor for motor in statement.args.split()]
         assert all([motor in motor_names for motor in input_motors]), \
             f'Input motors must be one of {motor_names[1:]}. Found: {input_motors}'
 
-        if len(input_motors) == 0:
-            self.arm.unlock_servos()
-        else:
-            self.arm.send(pk.write_servo_unlock(input_motors))
+        try:
+            if len(input_motors) == 0:
+                self.arm.unlock_servos()
+            else:
+                self.arm.send(pk.write_servo_unlock(input_motors))
+        except RuntimeError:
+            pass
 
     @staticmethod
     def help_unlock():  # pragma: no cover
-        print(f'Unlock individual motors of the arm.' 
-              f'Provide space separated names for each motor: '
-              f'{", ".join(motor_names[1:])}. '
+        print(f'Unlock individual motors of the arm.\n' 
+              f'Provide space separated names for any combination of:\n'
+              f'  ({", ".join(motor_names[1:])})\n'
               f'The default is all motors.')
 
-    @staticmethod
-    def do_shell(shell_command: str):  # pragma: no cover
-        """ Run a shell command. (! shell_command) """
-        system(shell_command)
-
-    @staticmethod
-    def do_EOF(_line: str) -> bool:  # pragma: no cover
+    def do_eof(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """
         print()
-        return True
+        return self._STOP_AND_EXIT
 
-    @staticmethod
-    def do_exit(_line: str) -> bool:  # pragma: no cover
+    def do_exit(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """
-        return True
+        return self._STOP_AND_EXIT
 
-    def default(self, line: str):  # pragma: no cover
-        print(f'*** Command <{line}> not recognized ***')
+    def default(self, statement: Statement):  # pragma: no cover
+        print(f'*** Command <{statement.command}> not recognized ***')
 
 
 def main():  # pragma: no cover
