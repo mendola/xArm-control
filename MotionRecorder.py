@@ -1,23 +1,15 @@
-import time
-import logging
-from math import sqrt
-from copy import deepcopy
-
 from RobotArm import RobotArm
+import packetmaker as pk
+import time
+from copy import deepcopy
+from math import sqrt
+import pickle
+import argparse
+import logging
+import pdb
 
-deviation_threshold = 3
 threshold_save_s = 5
-
-
-def state_differs(stateA, stateB):
-    if stateA is None or stateB is None:
-        return False
-
-    total_deviation = 0
-    for key in stateA.__dict__.keys():
-        total_deviation += (stateA.__dict__[key] - stateB.__dict__[key]) ** 2
-    return sqrt(total_deviation) > deviation_threshold
-
+motionpath_dir = "motionpaths/"
 
 class MotionRecorder:
     def __init__(self):
@@ -30,25 +22,40 @@ class MotionRecorder:
         time.sleep(0.1)
         self.xArm.receive_serial()
 
-    def load_pose_queue(self):
-        pass
+    def load_pose_queue(self,filename):
+        with open(motionpath_dir + filename, 'rb') as f:
+            self.pose_queue = pickle.load(f)
     
-    def save_pose_queue(self):
-        pass
+    def save_pose_queue(self,filename):
+        with open(motionpath_dir + filename, 'wb') as f:
+            pickle.dump(self.pose_queue,f)
 
-    def run_recorder(self):
+    def playback_from_file(self,filename,time_ms):
+        if time_ms == None: time_ms = '1000'
+        self.load_pose_queue(filename)
+        while True:
+            try:
+                for state in self.pose_queue:
+                    self.xArm.send(pk.write_servo_move(state.__dict__, time_ms=int(time_ms)))
+                    time.sleep(float(time_ms)/1000)
+            except KeyboardInterrupt:
+                break
+        self.xArm.unlock_servos()
+        print("done")
+ 
+    def run_recorder(self,filename):
         for i in range(3):
             self.xArm.unlock_servos()
             time.sleep(1)
 
         time_last_state_change = time.time()
-        most_recent_changed_state = None
+        most_recent_changed_state = deepcopy(self.xArm.State)
 
         while True:
             try:
                 self.try_update_state()
                 curr_time = time.time()
-                if state_differs(self.xArm.State, most_recent_changed_state):
+                if self.xArm.State ==  most_recent_changed_state:
                     most_recent_changed_state = deepcopy(self.xArm.State)
                     time_last_state_change = curr_time
                     self.log.info("State Changed")
@@ -61,16 +68,22 @@ class MotionRecorder:
 
             except KeyboardInterrupt:
                 break
-        print(self.pose_queue)
-
-
-def main():
-    Recorder = MotionRecorder()
-    Recorder.run_recorder()
+        self.save_pose_queue(filename)
+        self.xArm.unlock_servos()
+        print("Saved your sweet motion path to %s" % (motionpath_dir + filename))
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG, format='[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s'
-    )
-    main()
+    parser = argparse.ArgumentParser(description='Record and playback motion paths')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-r', '--record', help='Filename to save your recorded motion path')
+    group.add_argument('-p', '--play', help='Filename to replay a motion path from')
+    parser.add_argument('-t', '--time', help='Time for each motion to take in ms')
+    arguments = vars(parser.parse_args())
+    if arguments['record'] is not None:
+        Recorder = MotionRecorder()
+        Recorder.run_recorder(arguments['record'])
+    elif arguments['play'] is not None:
+        Recorder = MotionRecorder()
+        Recorder.playback_from_file(arguments['play'], arguments['time'])
+    
