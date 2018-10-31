@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from numpy.linalg import norm
 from typing import Dict, Iterable
 from definitions import motor_names
@@ -7,6 +8,9 @@ log = logging.getLogger('RobotState')
 
 
 class RobotState:
+    shoulder_to_elbow = 9.7
+    elbow_to_wrist = 9.7
+    wrist_to_fingers = 16.2
 
     def __init__(self) -> None:
         self.__dict__: Dict[str, float] = {motor: 0.0 for motor in motor_names[1:]}
@@ -48,3 +52,75 @@ class RobotState:
 
     def make_state_safe(self, *args):
         raise NotImplementedError
+
+    def get_cartesian(self):
+        """
+            This function returns a triple of the spherical coordinates of the tip of the fingers.
+            The triple: (x, y, z) where
+                - x : The direction along -45 degrees relative to the base.
+                - y : The direction along 45 degrees relative to the base.
+                - z : The direction straight up.
+        """
+        # Array of the link lengths
+        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+
+        # Array of angles and partial sums (in radians).
+        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+
+        vertical_coordinate = \
+            sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
+        azimuth = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
+        radius = norm(vertical_coordinate)
+        polar = np.deg2rad(getattr(self, 'base') + 45) if azimuth >= 0 else np.deg2rad(getattr(self, 'base') + 225)
+
+        return \
+            radius * np.sin(azimuth) * np.cos(polar), \
+            radius * np.sin(azimuth) * np.sin(polar), \
+            radius * np.cos(azimuth)
+
+    def get_cylindrical(self):
+        """
+            This function returns a triple of the cylindrical coordinates of the tip of the finger.
+            The triple: (radius, polar, z) where
+                - radius : The horizontal radius.
+                - polar  : The horizontal angle.
+                - z      : The upwards direction.
+        """
+        # Array of the link lengths
+        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+
+        # Array of angles and partial sums (in radians).
+        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+
+        vertical_coordinate = \
+            sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
+        azimuth = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
+        radius = norm(vertical_coordinate)
+        polar = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
+
+        return abs(radius * np.sin(azimuth)), polar, radius * np.cos(azimuth)
+
+    def get_spherical(self):
+        """
+            This function returns a triple of the spherical coordinates of the tip of the fingers.
+            The triple: (radius, azimuth, polar) where
+                - radius  : The radial distance.
+                - azimuth : The inclination as measured from upwards.
+                - polar   : The horizontal angle.
+        """
+        # Array of the link lengths.
+        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+
+        # Array of angles and partial sums (in radians).
+        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+
+        vertical_coordinate = \
+            sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
+        azimuth = np.rad2deg(np.arctan(vertical_coordinate[0] / vertical_coordinate[1]))
+        radius = norm(vertical_coordinate)
+        polar = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
+
+        return radius, azimuth, polar

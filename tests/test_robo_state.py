@@ -1,10 +1,13 @@
 import unittest
+import numpy as np
+
 from robo_state import RobotState
 from definitions import motor_names
 
 
 class TestRobotState(unittest.TestCase):
     test_state = RobotState()
+    arm_length = test_state.shoulder_to_elbow + test_state.elbow_to_wrist + test_state.wrist_to_fingers
 
     def test_keys(self):
         """ Test that keys returns the expected dictionary. """
@@ -50,6 +53,8 @@ class TestRobotState(unittest.TestCase):
     def test_update_state(self):
         """ Test that update_state correctly updates state. """
         # Arrange
+        test_arm = RobotState()
+
         test_update_1 = {'fingers': 'ten degrees'}
         test_update_2 = {'base': 300.0}
         test_update_3 = {'knuckles': 0.0}
@@ -58,17 +63,111 @@ class TestRobotState(unittest.TestCase):
         expected_zeros = {motor: 0.0 for motor in motor_names[1:]}
 
         # Act & Assert
-        self.test_state.update_state(test_update_1)
-        self.assertDictEqual(expected_zeros, vars(self.test_state))
+        test_arm.update_state(test_update_1)
+        self.assertDictEqual(expected_zeros, vars(test_arm))
 
-        self.test_state.update_state(test_update_2)
-        self.assertDictEqual(expected_zeros, vars(self.test_state))
+        test_arm.update_state(test_update_2)
+        self.assertDictEqual(expected_zeros, vars(test_arm))
 
-        self.test_state.update_state(test_update_3)
-        self.assertDictEqual(expected_zeros, vars(self.test_state))
+        test_arm.update_state(test_update_3)
+        self.assertDictEqual(expected_zeros, vars(test_arm))
 
-        self.test_state.update_state(test_update_4)
-        self.assertDictEqual(test_update_4, vars(self.test_state))
+        test_arm.update_state(test_update_4)
+        self.assertDictEqual(test_update_4, vars(test_arm))
+
+    def test_spherical_coordinates(self):
+        """ Test that spherical coordinates getter returns expected results. """
+        # Arrange
+        test_arm = RobotState()
+
+        straight_up = {'base': 0.0, 'shoulder': 0.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_straight_up = (self.arm_length, 0.0, 0.0)
+
+        horizontal = {'base': 100.0, 'shoulder': 90.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_horizontal = (self.arm_length, 90.0, 100.0)
+
+        zigzag = {'base': -30.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': -45.0}
+        expected_zigzag = \
+            ((np.sqrt(2) * self.test_state.shoulder_to_elbow) + self.test_state.wrist_to_fingers, 0.0, -30.0)
+
+        # Act & Assert
+        test_arm.update_state(straight_up)
+        self.assertEqual(expected_straight_up, test_arm.get_spherical())
+
+        test_arm.update_state(horizontal)
+        self.assertEqual(expected_horizontal, test_arm.get_spherical())
+
+        test_arm.update_state(zigzag)
+        self.assertEqual(expected_zigzag, test_arm.get_spherical())
+
+    def test_cartesian_coordinates(self):
+        """ Test that cartesian coordinates getter returns expected results. """
+        # Arrange
+        test_arm = RobotState()
+
+        straight_up = {'base': 0.0, 'shoulder': 0.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_straight_up = (0.0, 0.0, self.arm_length)
+
+        horizontal = {'base': 0.0, 'shoulder': 90.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_horizontal = (self.arm_length / np.sqrt(2), self.arm_length / np.sqrt(2), 0.0)
+
+        zigzag = {'base': 45.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': 45.0}
+        expected_zigzag = (0.0, self.test_state.wrist_to_fingers, (np.sqrt(2) * self.test_state.shoulder_to_elbow))
+
+        # Act & Assert
+        test_arm.update_state(straight_up)
+        self.assertEqual(expected_straight_up, test_arm.get_cartesian())
+
+        test_arm.update_state(horizontal)
+        for expected, test in zip(expected_horizontal, test_arm.get_cartesian()):
+            self.assertAlmostEqual(expected, test)
+
+        test_arm.update_state(zigzag)
+        for expected, test in zip(expected_zigzag, test_arm.get_cartesian()):
+            self.assertAlmostEqual(expected, test)
+
+    def test_cylindrical_coordinates(self):
+        """ Test that cylindrical coordinates getter returns expected results. """
+        # Arrange
+        test_arm = RobotState()
+
+        straight_up = {'base': 0.0, 'shoulder': 0.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_straight_up = (0.0, 0.0, self.arm_length)
+
+        horizontal = {'base': -60.0, 'shoulder': -90.0, 'elbow': 0.0, 'wrist': 0.0}
+        expected_horizontal = (self.arm_length, 120.0, 0.0)
+
+        zigzag = {'base': 15.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': -45.0}
+        expected_zigzag = \
+            (0.0, 15.0, (np.sqrt(2) * self.test_state.shoulder_to_elbow) + self.test_state.wrist_to_fingers)
+
+        # Act & Assert
+        test_arm.update_state(straight_up)
+        self.assertEqual(expected_straight_up, test_arm.get_cylindrical())
+
+        test_arm.update_state(horizontal)
+        for expected, test in zip(expected_horizontal, test_arm.get_cylindrical()):
+            self.assertAlmostEqual(expected, test)
+
+        test_arm.update_state(zigzag)
+        for expected, test in zip(expected_zigzag, test_arm.get_cylindrical()):
+            self.assertAlmostEqual(expected, test)
+
+    def test_coordinate_consistency(self):
+        """ Test the coordinate conversions are consistent. """
+        test_arm = RobotState()
+        for test in range(100):
+            # Arrange
+            angles_dict = {motor: np.random.randint(-120, 120) for motor in motor_names[1:]}
+
+            # Act
+            test_arm.update_state(angles_dict)
+
+            # Assert
+            self.assertAlmostEqual(np.linalg.norm(np.array(test_arm.get_cartesian())), test_arm.get_spherical()[0])
+            self.assertAlmostEqual(np.linalg.norm(np.array(test_arm.get_cartesian()[:2])), test_arm.get_cylindrical()[0])
+            self.assertAlmostEqual(test_arm.get_cartesian()[2], test_arm.get_cylindrical()[2])
+            self.assertAlmostEqual(test_arm.get_cylindrical()[1], test_arm.get_spherical()[2])
 
     def test_is_state_safe(self):
         """ Test is_state_safe: Not Implemented. """
