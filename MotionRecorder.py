@@ -1,8 +1,8 @@
+#! /usr/bin/env python3
 import pickle
-import argparse
 import logging
+import argparse
 from copy import deepcopy
-from typing import Optional
 from time import sleep, time
 from os import listdir, path
 
@@ -32,7 +32,7 @@ class MotionRecorder:
         with open(path.join(motionpath_dir, filename), 'wb') as f:
             pickle.dump(self.pose_queue, f)
 
-    def playback_from_file(self, filename: str, time_ms: Optional[float] = 1000.0) -> None:
+    def playback_from_file(self, filename: str, time_ms: float = 1000.0) -> None: # pragma: no cover
         self.load_pose_queue(filename)
         while True:
             try:
@@ -44,7 +44,7 @@ class MotionRecorder:
         self.xArm.unlock_servos()
         self.log.info("Done.")
  
-    def run_recorder(self, filename: str) -> None:
+    def run_recorder(self, filename: str) -> None: # pragma: no cover
         for i in range(3):
             self.xArm.unlock_servos()
             sleep(0.1)
@@ -59,7 +59,7 @@ class MotionRecorder:
                 if self.xArm.State == last_state:
                     last_state = deepcopy(self.xArm.State)
                     time_last_state_change = curr_time
-                    self.log.info("State Changed.")
+                    self.log.debug("State Changed.")
                 if curr_time - time_last_state_change > threshold_save_s:
                     self.pose_queue.append(last_state)
                     time_last_state_change = curr_time
@@ -86,10 +86,10 @@ def main():
     parser.add_argument('-t', '--time', type=float, default=1000.0, help='Time interval for each motion to take in ms.')
     arguments = parser.parse_args()
 
-    if arguments['record'] is not None:
-        MotionRecorder().run_recorder(arguments['record'])
-    elif arguments['play'] is not None:
-        MotionRecorder().playback_from_file(arguments['play'], arguments['time'])
+    if arguments.record is not None:
+        MotionRecorder().run_recorder(arguments.record)
+    elif arguments.play is not None:
+        MotionRecorder().playback_from_file(arguments.play, arguments.time)
 
 
 if __name__ == '__main__':
