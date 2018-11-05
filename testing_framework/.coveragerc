@@ -26,3 +26,4 @@ omit =
     # Files to omit.
     */tests/*
     .mypy_cache/*
+    ../relax_motors.py
