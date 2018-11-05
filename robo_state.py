@@ -12,8 +12,11 @@ class RobotState:
     elbow_to_wrist = 9.7
     wrist_to_fingers = 16.2
 
-    def __init__(self) -> None:
-        self.__dict__: Dict[str, float] = {motor: 0.0 for motor in motor_names[1:]}
+    def __init__(self, init_dict=None) -> None:
+        if init_dict:
+            self.__dict__: Dict[str, float] = init_dict
+        else:
+            self.__dict__: Dict[str, float] = {motor: 0.0 for motor in motor_names[1:]}
 
     def __repr__(self) -> str:
         return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in self.items()])
