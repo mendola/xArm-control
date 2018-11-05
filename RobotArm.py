@@ -1,6 +1,4 @@
 import logging
-from os import path
-from time import sleep
 from typing import Dict
 from itertools import count
 from serial import Serial
@@ -105,46 +103,3 @@ class RobotArm:
 
     def request_positions(self):
         self.send(pk.write_request_positions())
-
-
-def main():
-    xArm = RobotArm()
-    poseA = {
-    #    'base': 0.0,
-    #    'shoulder': 0.0,
-        'elbow': 0.0,
-        'wrist': 0.0,
-        'hand': 0.0,
-        'fingers': 0.0
-    }
-
-    poseB = {
-    #    'base': 50.0,
-    #    'shoulder': 50.0,
-        'elbow': 50.0,
-        'wrist': 50.0,
-        'hand': 50.0,
-        'fingers': 50.0
-    }
-
-    try:
-        while True:
-            xArm.send(pk.write_servo_move(poseA, time_ms=5000))
-            for i in range(5):
-                xArm.send(pk.write_request_positions())
-                sleep(1)
-                xArm.receive_serial()
-            xArm.send(pk.write_servo_move(poseB, time_ms=5000))
-            for i in range(5):
-                xArm.send(pk.write_request_positions())
-                sleep(1)
-                xArm.receive_serial()
-
-    except KeyboardInterrupt:
-        print('Stopped by user')
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
-                        format=f'[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s')
-    main()

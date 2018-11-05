@@ -2,6 +2,7 @@
 .mypy_cache/*
 */__pycache__/
 __pycache__/*
+tests/snapshots/__pycache__/*
 testing_framework/.coverage
 testing_framework/.mypy_cache/*
 venv/*
