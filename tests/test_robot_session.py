@@ -2,6 +2,7 @@ import mock
 import snapshottest
 from cmd2 import Statement
 from sys import stdin, stdout
+from argparse import Namespace
 
 from robot_session import RobotSession
 
@@ -39,7 +40,7 @@ class TestRobotSession(snapshottest.TestCase):
         # Arrange
         no_serial_session = RobotSession()
         session = self.create()
-        move_command = Statement("100 50 10 -30 -110 0")
+        move_command = '--fingers 100 --base 50 --elbow 10 --shoulder -30 --wrist -110 --hand 0 -t 500'
 
         # Act
         no_serial_session.do_move(move_command)
