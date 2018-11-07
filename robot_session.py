@@ -72,8 +72,9 @@ class RobotSession(cmd2.Cmd):
     def do_move(self, motors: Namespace):
         """ Move the arm to the position specified. Provide space separated angle for each motor. """
         degrees_dict: Dict[str, float] = vars(self.arm.State)
-        motors_dict = vars(motors)
-        interval = motors_dict.pop('time')
+        # ^ This is pointing to the State object, so will update the state on each move.
+        motors_dict: Dict[str, float] = {key: value for key, value in vars(motors).items() if value}
+        interval: int = motors_dict.pop('time')
         degrees_dict.update(motors_dict)
 
         try:
