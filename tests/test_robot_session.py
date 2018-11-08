@@ -41,14 +41,18 @@ class TestRobotSession(snapshottest.TestCase):
         no_serial_session = RobotSession()
         session = self.create()
         move_command = '--fingers 100 --base 50 --elbow 10 --shoulder -30 --wrist -110 --hand 0 -t 500'
+        return_command = '-r'
 
         # Act
         no_serial_session.do_move(move_command)
         session.do_move(move_command)
+        session.do_move(return_command)
 
         # Assert
-        self.assertTrue(len(session.arm.Ser.write.call_args_list) == 1)
+        self.assertTrue(len(session.arm.Ser.write.call_args_list) == 2)
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[0]))
+        self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[1]))
+
 
     def test_unlock(self):
         """ Test that unlock sends the expected command. """
