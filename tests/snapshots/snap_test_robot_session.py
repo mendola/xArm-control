@@ -19,3 +19,5 @@ Servo hand     : +0.00)'''
 snapshots['TestRobotSession::test_unlock 1'] = "call(b'UU\\t\\x14\\x06\\x01\\x02\\x03\\x04\\x05\\x06')"
 
 snapshots['TestRobotSession::test_unlock 2'] = "call(b'UU\\x06\\x14\\x03\\x01\\x02\\x04')"
+
+snapshots['TestRobotSession::test_move 2'] = "call(b'UU\\x17\\x03\\x06\\xe8\\x03\\x01\\xf4\\x01\\x02\\xf4\\x01\\x03\\xf4\\x01\\x04\\xf4\\x01\\x05\\xf4\\x01\\x06\\xf4\\x01')"

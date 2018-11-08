@@ -3,7 +3,7 @@ import sys
 import cmd2
 import argparse
 from time import sleep
-from typing import Dict, List
+from typing import Dict, List, Union
 from cmd2 import Statement, with_argparser, with_category
 from argparse import ArgumentParser, Namespace
 
@@ -41,6 +41,7 @@ class RobotSession(cmd2.Cmd):
     motor_parser.add_argument('--hand',     nargs='?', type=float, help="Hand motor's angle in degrees")
     motor_parser.add_argument('--fingers',  nargs='?', type=float, help="Fingers motor's angle in degrees")
     motor_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
+    motor_parser.add_argument('-r', '--return', action='store_true', help='Returns arm to upwards position.')
 
     point_parser = ArgumentParser()
     point_group = point_parser.add_mutually_exclusive_group()
@@ -69,12 +70,15 @@ class RobotSession(cmd2.Cmd):
 
     @with_category('xArm Commands')
     @with_argparser(motor_parser)
-    def do_move(self, motors: Namespace):
+    def do_move(self, motors: Union[Namespace, str]):
         """ Move the arm to the position specified. Provide space separated angle for each motor. """
         degrees_dict: Dict[str, float] = vars(self.arm.State)
         # ^ This is pointing to the State object, so will update the state on each move.
         motors_dict: Dict[str, float] = {key: value for key, value in vars(motors).items() if value is not None}
         interval: int = motors_dict.pop('time')
+        upright: bool = motors_dict.pop('return')
+        if upright:
+            motors_dict = {motor: 0 for motor in motor_names[1:]}
         degrees_dict.update(motors_dict)
 
         try:
@@ -113,10 +117,6 @@ class RobotSession(cmd2.Cmd):
     def do_eof(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """
         print()
-        return self._STOP_AND_EXIT
-
-    def do_exit(self, _statement: Statement) -> bool:  # pragma: no cover
-        """ Exit CLI. """
         return self._STOP_AND_EXIT
 
     def default(self, statement: Statement):  # pragma: no cover
