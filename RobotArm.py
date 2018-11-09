@@ -6,7 +6,9 @@ from serial.serialutil import SerialException
 
 from robo_state import RobotState
 from definitions import commands, motor_names
+from Point import Point
 from robo_utils import rotation_to_degrees
+from robot_kinematics import get_pose_for_target_analytical
 import packetmaker as pk
 
 
@@ -37,6 +39,16 @@ class RobotArm:
             degree_dict = self.State.make_state_safe(degree_dict)
         self.send(pk.write_servo_move(degree_dict, time_ms))
 
+    def move_to_point(self, point: Point, time_ms: int):
+        computed_state : RobotState = get_pose_for_target_analytical(point)
+
+        if not computed_state.is_state_safe():
+            self.log.warning('Commanded angle is not safe. Not sending.')
+        else:
+            degrees_dict: Dict[str, float] = vars(computed_state)
+            self.send(pk.write_servo_move(degrees_dict, time_ms))
+        return computed_state
+        
     def unlock_servos(self):
         self.send(pk.write_servo_unlock())
 

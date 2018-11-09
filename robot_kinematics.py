@@ -1,11 +1,12 @@
 import numpy as np
 from robo_state import RobotState
-import pdb
-def reachable(target_point):
+from Point import Point
+
+def reachable(target_point: Point):
     #need to implement
     return True
 
-def get_pose_for_target_analytical(target_point, coordinate_type='spherical'):
+def get_pose_for_target_analytical(target_point : Point):
     """
         This function returns a RobotState that will move the center of the closed
         gripper fingers to the target at target_point.
@@ -15,26 +16,17 @@ def get_pose_for_target_analytical(target_point, coordinate_type='spherical'):
             - type: The coordinate space of 'target_point'. 'spherical', 'cylindrical', or
                 'cartesian'
     """
-    # Convert coordinate space if needed
-    if coordinate_type == 'cylindrical':
-        target_point = cylindrical_to_spherical(target_point)
-    elif coordinate_type == 'cartesian':
-        target_point = cartesian_to_spherical(target_point)
-    
     if not reachable(target_point):
         print("Can't reach target")
         return None
-
-    target_radius = target_point['radius']
-    target_azimuth = np.deg2rad(target_point['azimuth'])
-    target_polar = np.deg2rad(target_point['polar'])
-    
+    target_radius = target_point.spherical[0]
+    target_azimuth = np.deg2rad(target_point.spherical[1])
+    target_polar = np.deg2rad(target_point.spherical[2])
     if target_polar <= np.pi/2 and target_polar >= -np.pi/2:
         mode = 'forward'
     else:
         mode = 'backward'
 
-    print(mode)
     if mode =='forward':
         base_angle = target_polar  # need to adjust sign
     else:
@@ -42,16 +34,24 @@ def get_pose_for_target_analytical(target_point, coordinate_type='spherical'):
             base_angle = target_polar - np.pi
         else:
             base_angle = np.pi + target_polar
-    shared_angle1 = np.arccos( (4*10.0**2 + 2*6.5*10.0 + np.sqrt( (4*10.0**2 + 2*6.5*10.0)**2 - 4*(4*10.0**2 + 4*6.5*10.0)*(6.5**2 + 10.0**2 - target_radius**2))  ) / (2*(4*10.0**2 + 4*6.5*10.0)))
-    shared_angle2 = np.arccos( (4*10.0**2 + 2*6.5*10.0 - np.sqrt( (4*10.0**2 + 2*6.5*10.0)**2 - 4*(4*10.0**2 + 4*6.5*10.0)*(6.5**2 + 10.0**2 - target_radius**2))  ) / (2*(4*10.0**2 + 4*6.5*10.0)))
-    #print(shared_angle1)
-    #print(shared_angle2)
-    if not np.isnan(shared_angle1) and abs(shared_angle1) >= np.pi/2:
-        elbow_angle = wrist_angle = shared_angle1
-    elif not np.isnan(shared_angle2) and abs(shared_angle2) >= np.pi/2:
-        elbow_angle = wrist_angle = shared_angle2
+
+    A = 4*10.0**2 + 4*6.5*10.0
+    B = -(4*10.0**2 + 2*6.5*10.0)
+    C = 6.5**2 + 10.0**2 - target_radius**2
+
+
+    cos_solution1 = (-B + np.sqrt(B**2 - 4*A*C)) / (2*A)
+    cos_solution2 = (-B - np.sqrt(B**2 - 4*A*C)) / (2*A)
+
+    solution1 = np.arccos(cos_solution1) if -1 <= cos_solution1 <= 1 else None
+    solution2 = np.arccos(cos_solution2) if -1 <= cos_solution2 <= 1 else None
+    
+    if solution1 and solution1 >= np.pi/2: 
+        elbow_angle = wrist_angle = solution1
+    elif solution2 and solution2 >= np.pi/2:
+        elbow_angle = wrist_angle = solution2
     else:
-        print("no solution")
+        self.log.warning("no solution")
         return None
 
     azimuth_offset = np.pi - (elbow_angle - np.arcsin(6.5*np.sin(elbow_angle)/target_radius))
@@ -64,14 +64,13 @@ def get_pose_for_target_analytical(target_point, coordinate_type='spherical'):
         elbow_angle *= -1
         wrist_angle *= -1
 
-    ret_dict = {'base' : -np.rad2deg(base_angle),
-                'shoulder' : np.rad2deg(shoulder_angle),
-                'elbow' : np.rad2deg(elbow_angle),
-                'wrist' : np.rad2deg(wrist_angle),
-                'hand' : 0,
-                'fingers' : 0
+    ret_dict = {'base' : float(-np.rad2deg(base_angle)),
+                'shoulder' : float(np.rad2deg(shoulder_angle)),
+                'elbow' : float(np.rad2deg(elbow_angle)),
+                'wrist' : float(np.rad2deg(wrist_angle)),
+                'hand' : 0.0,
+                'fingers' : 0.0
                 }
-    #print(ret_dict)
     return RobotState(ret_dict)
 
 

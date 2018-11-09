@@ -6,6 +6,8 @@ from time import sleep
 from typing import Dict, List, Union
 from cmd2 import Statement, with_argparser, with_category
 from argparse import ArgumentParser, Namespace
+import logging
+from os import path
 
 from definitions import motor_names
 import packetmaker as pk
@@ -18,14 +20,14 @@ class CreatePoint(argparse.Action):  # pragma: no cover
         super(CreatePoint, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, _parser: ArgumentParser, namespace: Namespace, values: List[float], _option_string: str):
-        if self.dest == '--cart':
+        if self.dest == 'cart':
             setattr(namespace, 'point', Point(cartesian=values))
-        elif self.dest == '--cyl':
+        elif self.dest == 'cyl':
             setattr(namespace, 'point', Point(cylindrical=values))
-        elif self.dest == '--sphere':
+        elif self.dest == 'sphere':
             setattr(namespace, 'point', Point(spherical=values))
         else:
-            raise TypeError(f'Flag not recognized: {self.dest}')
+            raise TypeError #(f'Flag not recognized: {self.dest}')
 
 
 class RobotSession(cmd2.Cmd):
@@ -51,11 +53,13 @@ class RobotSession(cmd2.Cmd):
                              help="Define a cylindrical coordinate: (R, THETA, Z)")
     point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
                              help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
+    point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
 
     def __init__(self, stdin=sys.stdin, stdout=sys.stdout) -> None:
         self.arm: RobotArm = RobotArm()
         super().__init__(stdin=stdin, stdout=stdout)
+        self.log = logging.getLogger("RobotSession")
 
     @with_category('xArm Commands')
     def do_poll(self, _statement: Statement):
@@ -83,6 +87,23 @@ class RobotSession(cmd2.Cmd):
 
         try:
             self.arm.send(pk.write_servo_move(degrees_dict, interval))
+        except RuntimeError:
+            pass
+
+    @with_category('xArm Commands')
+    @with_argparser(point_parser)
+    def do_move_to_point(self, arguments: Namespace):
+        """ Move the arm to the point specified. First argument should by cartesion/cylindrical/spherical.
+            Second argument should be time to move in ms.
+            Next three arguments should specify coordinates in the form: azimuth=35.3"""
+        args_dict = vars(arguments)
+        interval = args_dict.pop('time')
+        point_dict = args_dict['point']
+        try:
+            print(point_dict)
+            pose = self.arm.move_to_point(point_dict, interval)
+            pdb.set_trace()
+            self.log.info(pose)
         except RuntimeError:
             pass
 
@@ -124,6 +145,8 @@ class RobotSession(cmd2.Cmd):
 
 
 def main():  # pragma: no cover
+    logging.basicConfig(level=logging.INFO,
+                        format=f'[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s')
     try:
         RobotSession().cmdloop()
     except KeyboardInterrupt:

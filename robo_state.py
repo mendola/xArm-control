@@ -6,6 +6,13 @@ from definitions import motor_names
 
 log = logging.getLogger('RobotState')
 
+safe_ranges = {'base': (-120, 120),
+                'shoulder': (-94.0, 93.0),
+                'elbow': (-120, 120),
+                'wrist': (-109, 120),
+                'hand': (-120, 120),
+                'fingers': (-99, 49)
+            }
 
 class RobotState:
     shoulder_to_elbow = 9.7
@@ -50,8 +57,13 @@ class RobotState:
             self.__dict__[motor] = angle
         log.debug('Updated State:\n' + str(self))
 
-    def is_state_safe(self, *args):
-        raise NotImplementedError
+    def is_state_safe(self) -> bool:
+        angles_dict = vars(self)
+        for key in angles_dict.keys():
+            if not safe_ranges[key][0] <= angles_dict[key] <= safe_ranges[key][1]:
+                log.warning("Angle {} is unsafe for the {} motor.".format(angles_dict[key],key))
+                return False
+        return True
 
     def make_state_safe(self, *args):
         raise NotImplementedError
