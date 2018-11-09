@@ -170,9 +170,24 @@ class TestRobotState(unittest.TestCase):
             self.assertAlmostEqual(test_arm.get_cylindrical()[1], test_arm.get_spherical()[2])
 
     def test_is_state_safe(self):
-        """ Test is_state_safe: Not Implemented. """
-        with self.assertRaises(NotImplementedError):
-            self.test_state.is_state_safe()
+        """ Test is_state_safe """
+        test_states= [
+            {'base': 0, 'shoulder': 0, 'elbow': 0, 'wrist': 0, 'hand': 0, 'fingers': 0},
+            {'base': 120, 'shoulder': 120, 'elbow': 120, 'wrist': 120, 'hand': 120, 'fingers': 120},
+            {'base': -120, 'shoulder': -120, 'elbow': -120, 'wrist': -120, 'hand': -120, 'fingers': -120},        
+            {'base': -120, 'shoulder': 93, 'elbow': -120, 'wrist': 120, 'hand': -120, 'fingers': -49}            
+        ]
+
+        expected_results= [
+            True,
+            False,
+            False,
+            True
+        ]
+
+        for state, expected_bool in zip(test_states,expected_results):
+            self.assertEqual(RobotState(state).is_state_safe(),expected_bool)
+
 
     def test_make_state_safe(self):
         """ Test make_state_safe: Not Implemented. """
