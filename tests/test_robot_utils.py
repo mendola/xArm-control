@@ -1,6 +1,6 @@
 import unittest
 
-from robo_utils import get_high_bits, get_low_bits, degrees_to_rotation, rotation_to_degrees
+from robot_utils import get_high_bits, get_low_bits, degrees_to_rotation, rotation_to_degrees
 
 
 class TestRoboUtils(unittest.TestCase):

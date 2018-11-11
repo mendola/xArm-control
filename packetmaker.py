@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Callable, Dict, List
 
 from definitions import commands, motor_ids, motor_names
-from robo_utils import *
+from robot_utils import *
 
 
 def with_header(func: Callable[..., bytes]) -> Callable:

@@ -1,8 +1,9 @@
 import unittest
-from robo_state import RobotState
+from RobotState import RobotState
 from definitions import joints_list
 from robot_kinematics import get_pose_for_target_analytical
 from Point import Point
+
 
 class TestRobotKinematics(unittest.TestCase):
     def robot_state_assert_almost_equal(self, stateA, stateB, thresh):
@@ -48,7 +49,3 @@ class TestRobotKinematics(unittest.TestCase):
         for test_input, target in zip(test_inputs, target_results):
             out = get_pose_for_target_analytical(test_input)
             self.robot_state_assert_almost_equal(out, target, 0.1)
-
-if __name__ == '__main__':
-    tst = TestRobotKinematics()
-    tst.test_get_pose_for_target_analytical()
