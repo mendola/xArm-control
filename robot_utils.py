@@ -7,7 +7,7 @@ def get_low_bits(bits: int) -> int:
 
 
 def degrees_to_rotation(degrees: float) -> int:
-    rotation = round((degrees + 120) * 1000 / 240)
+    rotation = int(round((degrees + 120) * 1000 / 240))
     if rotation > 1000:
             rotation = 1000
     elif rotation < 0:

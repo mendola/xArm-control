@@ -44,7 +44,7 @@ class MotionRecorder:
         self.xArm.unlock_servos()
         self.log.info("Done.")
  
-    def run_recorder(self, filename: str) -> None: # pragma: no cover
+    def run_recorder(self, filename: str) -> None:  # pragma: no cover
         for i in range(3):
             self.xArm.unlock_servos()
             sleep(0.1)

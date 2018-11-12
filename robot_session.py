@@ -1,24 +1,26 @@
 #! /usr/bin/env python3
 import sys
 import cmd2
+import logging
 import argparse
+from os import path
 from time import sleep
 from typing import Dict, List, Union
 from cmd2 import Statement, with_argparser, with_category
 from argparse import ArgumentParser, Namespace
-import logging
-from os import path
+
+from Point import Point
+from RobotArm import RobotArm
 
 from definitions import motor_names
 import packetmaker as pk
-from Point import Point
-from RobotArm import RobotArm
 
 
 class CreatePoint(argparse.Action):  # pragma: no cover
     def __init__(self, option_strings, dest, **kwargs):
         super(CreatePoint, self).__init__(option_strings, dest, **kwargs)
 
+    # noinspection PyMethodOverriding
     def __call__(self, _parser: ArgumentParser, namespace: Namespace, values: List[float], _option_string: str):
         if self.dest == 'cart':
             setattr(namespace, 'point', Point(cartesian=values))
@@ -27,7 +29,7 @@ class CreatePoint(argparse.Action):  # pragma: no cover
         elif self.dest == 'sphere':
             setattr(namespace, 'point', Point(spherical=values))
         else:
-            raise TypeError #(f'Flag not recognized: {self.dest}')
+            raise TypeError(f'Flag not recognized: {self.dest}')
 
 
 class RobotSession(cmd2.Cmd):
@@ -88,30 +90,33 @@ class RobotSession(cmd2.Cmd):
         try:
             self.arm.send(pk.write_servo_move(degrees_dict, interval))
         except RuntimeError:
-            pass
-
-    @with_category('xArm Commands')
-    @with_argparser(point_parser)
-    def do_move_to_point(self, arguments: Namespace):
-        """ Move the arm to the point specified. First argument should by cartesion/cylindrical/spherical.
-            Second argument should be time to move in ms.
-            Next three arguments should specify coordinates in the form: azimuth=35.3"""
-        args_dict = vars(arguments)
-        interval = args_dict.pop('time')
-        point_dict = args_dict['point']
-        try:
-            print(point_dict)
-            pose = self.arm.move_to_point(point_dict, interval)
-            pdb.set_trace()
-            self.log.info(pose)
-        except RuntimeError:
-            pass
+            self.log.error('RuntimeError: Skipping move_to_point command.')
 
     @staticmethod
     def help_move():  # pragma: no cover
         print(f'Move the arm to the position specified.\n'
               f'Provide space separated angle for each of the following:\n'
               f'  ({", ".join(motor_names[1:])})')
+
+    @with_category('xArm Commands')
+    @with_argparser(point_parser)
+    def do_move2point(self, arguments: Union[Namespace, str]):
+        """ Move the arm to the point specified. """
+        try:
+            pose = self.arm.move_to_point(arguments.point, arguments.time)
+            self.log.info(pose)
+        except RuntimeError:
+            self.log.error('RuntimeError: Skipping move_to_point command.')
+
+    @staticmethod
+    def help_move2point():  # pragma: no cover
+        print(f'Move the arm to the point specified. \n'
+              f'  First argument should be one of: \n'
+              f'    * --cart X Y Z \n'
+              f'    * --cyl R THETA Z \n'
+              f'    * --sphere R AZIMUTH THETA \n'
+              f'  Second argument should be time to move in milliseconds: \n'
+              f'    * -t TIME')
 
     @with_category('xArm Commands')
     def do_unlock(self, statement: Statement):
