@@ -187,9 +187,3 @@ class TestRobotState(unittest.TestCase):
 
         for state, expected_bool in zip(test_states,expected_results):
             self.assertEqual(RobotState(state).is_state_safe(),expected_bool)
-
-
-    def test_make_state_safe(self):
-        """ Test make_state_safe: Not Implemented. """
-        with self.assertRaises(NotImplementedError):
-            self.test_state.make_state_safe()

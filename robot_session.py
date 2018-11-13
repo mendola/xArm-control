@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 import sys
 import cmd2
-import logging
 import argparse
+import logging
 from os import path
 from time import sleep
-from typing import Dict, List, Union
+from typing import Any, Dict, IO, List, Union
 from cmd2 import Statement, with_argparser, with_category
 from argparse import ArgumentParser, Namespace
 
@@ -17,11 +17,10 @@ import packetmaker as pk
 
 
 class CreatePoint(argparse.Action):  # pragma: no cover
-    def __init__(self, option_strings, dest, **kwargs):
+    def __init__(self, option_strings: str, dest: str, **kwargs: Any):
         super(CreatePoint, self).__init__(option_strings, dest, **kwargs)
 
-    # noinspection PyMethodOverriding
-    def __call__(self, _parser: ArgumentParser, namespace: Namespace, values: List[float], _option_string: str):
+    def __call__(self, _parser, namespace: Namespace, values: List[float], _option_string):  # type: ignore
         if self.dest == 'cart':
             setattr(namespace, 'point', Point(cartesian=values))
         elif self.dest == 'cyl':
@@ -37,7 +36,7 @@ class RobotSession(cmd2.Cmd):
     prompt: str = ' (xArm) '
 
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
-    motor_parser = ArgumentParser()
+    motor_parser: ArgumentParser = ArgumentParser()
     motor_parser.add_argument('--base',     nargs='?', type=float, help="Base motor's angle in degrees")
     motor_parser.add_argument('--shoulder', nargs='?', type=float, help="Shoulder motor's angle in degrees")
     motor_parser.add_argument('--elbow',    nargs='?', type=float, help="Elbow motor's angle in degrees")
@@ -47,7 +46,7 @@ class RobotSession(cmd2.Cmd):
     motor_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
     motor_parser.add_argument('-r', '--return', action='store_true', help='Returns arm to upwards position.')
 
-    point_parser = ArgumentParser()
+    point_parser: ArgumentParser = ArgumentParser()
     point_group = point_parser.add_mutually_exclusive_group()
     point_group.add_argument('--cart', nargs=3, type=float, action=CreatePoint, metavar=('X', 'Y', 'Z'),
                              help="Define a cartesian coordinate: (X, Y, Z)")
@@ -58,13 +57,13 @@ class RobotSession(cmd2.Cmd):
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
 
-    def __init__(self, stdin=sys.stdin, stdout=sys.stdout) -> None:
+    def __init__(self, stdin: IO = sys.stdin, stdout: IO = sys.stdout):
         self.arm: RobotArm = RobotArm()
         super().__init__(stdin=stdin, stdout=stdout)
-        self.log = logging.getLogger("RobotSession")
+        self.log: logging.Logger = logging.getLogger("RobotSession")
 
     @with_category('xArm Commands')
-    def do_poll(self, _statement: Statement):
+    def do_poll(self, _statement: Statement) -> None:
         """ Poll the position of each motor. """
         try:
             self.arm.request_positions()
@@ -72,15 +71,16 @@ class RobotSession(cmd2.Cmd):
             self.arm.receive_serial()
             print(self.arm.State)
         except RuntimeError:
-            pass
+            self.log.error('RuntimeError: Skipping poll command.')
 
     @with_category('xArm Commands')
     @with_argparser(motor_parser)
-    def do_move(self, motors: Union[Namespace, str]):
+    def do_move(self, motors: Union[Namespace, str]) -> None:
         """ Move the arm to the position specified. Provide space separated angle for each motor. """
         degrees_dict: Dict[str, float] = vars(self.arm.State)
         # ^ This is pointing to the State object, so will update the state on each move.
-        motors_dict: Dict[str, float] = {key: value for key, value in vars(motors).items() if value is not None}
+        motors_dict: Dict[str, Any] = \
+            {key: value for key, value in vars(motors).items() if value is not None}
         interval: int = motors_dict.pop('time')
         upright: bool = motors_dict.pop('return')
         if upright:
@@ -93,14 +93,14 @@ class RobotSession(cmd2.Cmd):
             self.log.error('RuntimeError: Skipping move_to_point command.')
 
     @staticmethod
-    def help_move():  # pragma: no cover
+    def help_move() -> None:  # pragma: no cover
         print(f'Move the arm to the position specified.\n'
               f'Provide space separated angle for each of the following:\n'
               f'  ({", ".join(motor_names[1:])})')
 
     @with_category('xArm Commands')
     @with_argparser(point_parser)
-    def do_move2point(self, arguments: Union[Namespace, str]):
+    def do_move2point(self, arguments: Namespace) -> None:
         """ Move the arm to the point specified. """
         try:
             pose = self.arm.move_to_point(arguments.point, arguments.time)
@@ -109,7 +109,7 @@ class RobotSession(cmd2.Cmd):
             self.log.error('RuntimeError: Skipping move_to_point command.')
 
     @staticmethod
-    def help_move2point():  # pragma: no cover
+    def help_move2point() -> None:  # pragma: no cover
         print(f'Move the arm to the point specified. \n'
               f'  First argument should be one of: \n'
               f'    * --cart X Y Z \n'
@@ -119,7 +119,7 @@ class RobotSession(cmd2.Cmd):
               f'    * -t TIME')
 
     @with_category('xArm Commands')
-    def do_unlock(self, statement: Statement):
+    def do_unlock(self, statement: Statement) -> None:
         """ Unlock servo motors. """
         input_motors: List[str] = [motor for motor in statement.args.split()]
         assert all([motor in motor_names for motor in input_motors]), \
@@ -134,7 +134,7 @@ class RobotSession(cmd2.Cmd):
             pass
 
     @staticmethod
-    def help_unlock():  # pragma: no cover
+    def help_unlock() -> None:  # pragma: no cover
         print(f'Unlock individual motors of the arm.\n' 
               f'Provide space separated names for any combination of:\n'
               f'  ({", ".join(motor_names[1:])})\n'
@@ -145,11 +145,11 @@ class RobotSession(cmd2.Cmd):
         print()
         return self._STOP_AND_EXIT
 
-    def default(self, statement: Statement):  # pragma: no cover
+    def default(self, statement: Statement) -> None:  # pragma: no cover
         print(f'*** Command <{statement.command}> not recognized ***')
 
 
-def main():  # pragma: no cover
+def main() -> None:  # pragma: no cover
     logging.basicConfig(level=logging.INFO,
                         format=f'[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s')
     try:

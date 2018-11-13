@@ -34,7 +34,7 @@ class Point:
                 f'cylindrical=({self.cylindrical[0]:+0.3f}, {self.cylindrical[1]:+0.3f}, {self.cylindrical[2]:+0.3f}), '
                 f'spherical=({self.spherical[0]:+0.3f}, {self.spherical[1]:+0.3f}, {self.spherical[2]:+0.3f}))')
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other) -> bool:  # type: ignore
         cartesian_equal = np.allclose(self.cartesian, other.cartesian)
         cylindrical_equal = \
             np.isclose(self.cylindrical[0], other.cylindrical[0]) and \

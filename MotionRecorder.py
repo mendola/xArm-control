@@ -2,22 +2,24 @@
 import pickle
 import logging
 import argparse
+from typing import List
 from copy import deepcopy
 from time import sleep, time
 from os import listdir, path
 
 import packetmaker as pk
 from RobotArm import RobotArm
+from RobotState import RobotState
 
 threshold_save_s = 5
 motionpath_dir = 'motionpaths'
 
 
 class MotionRecorder:
-    def __init__(self):
-        self.xArm = RobotArm()
-        self.pose_queue = []
-        self.log = logging.getLogger("MotionRecorder")
+    def __init__(self) -> None:
+        self.xArm: RobotArm = RobotArm()
+        self.pose_queue: List[RobotState] = []
+        self.log: logging.Logger = logging.getLogger("MotionRecorder")
 
     def try_update_state(self) -> None:
         self.xArm.request_positions()
@@ -32,7 +34,7 @@ class MotionRecorder:
         with open(path.join(motionpath_dir, filename), 'wb') as f:
             pickle.dump(self.pose_queue, f)
 
-    def playback_from_file(self, filename: str, time_ms: float = 1000.0) -> None: # pragma: no cover
+    def playback_from_file(self, filename: str, time_ms: float = 1000.0) -> None:  # pragma: no cover
         self.load_pose_queue(filename)
         while True:
             try:
@@ -56,10 +58,12 @@ class MotionRecorder:
             try:
                 self.try_update_state()
                 curr_time = time()
+
                 if self.xArm.State == last_state:
                     last_state = deepcopy(self.xArm.State)
                     time_last_state_change = curr_time
                     self.log.debug("State Changed.")
+
                 if curr_time - time_last_state_change > threshold_save_s:
                     self.pose_queue.append(last_state)
                     time_last_state_change = curr_time
@@ -74,7 +78,7 @@ class MotionRecorder:
         self.log.info(f'Saved your sweet motion path to {path.join(motionpath_dir + filename)}')
 
 
-def main():
+def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format=f'[%(levelname)s] {path.basename(__file__)} %(funcName)s: \n%(message)s')
 

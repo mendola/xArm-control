@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 from definitions import commands, motor_ids, motor_names
 from robot_utils import *
@@ -8,7 +8,7 @@ from robot_utils import *
 def with_header(func: Callable[..., bytes]) -> Callable:
     """ Prepends the [0x55, 0x55] heading to messages. """
     @wraps(func)
-    def decorator(*args, **kwargs):
+    def decorator(*args: Any, **kwargs: Any) -> bytes:
         header: bytes = bytes([0x55, 0x55])
         message: bytes = func(*args, **kwargs)
         return header + message

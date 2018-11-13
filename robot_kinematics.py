@@ -27,7 +27,8 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     """
     if not reachable(target_point):
         log.error(f"Target point cannot be reached: {target_point}.")
-        return
+        # We need to be careful with returning None since it will permeate.
+        return None
 
     target_radius = target_point.spherical[0]
     target_azimuth = np.deg2rad(target_point.spherical[1])
@@ -68,7 +69,7 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
         elbow_angle = wrist_angle = solution2
     else:
         log.warning("No solution calculated.")
-        return
+        return None
     #                                            magic number
     azimuth_offset = np.pi - (elbow_angle - np.arcsin(6.5 * np.sin(elbow_angle) / target_radius))
     shoulder_angle = target_azimuth - azimuth_offset  # need to adjust sign
@@ -92,7 +93,7 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     return RobotState(degrees_dict)
 
 
-if __name__ == '__main__':
-    point = {'radius': 11.9269, 'azimuth': 90, 'polar': 45}
-    # This is broken. You can't input a dict into this function.
-    print(get_pose_for_target_analytical(point))
+# The below is broken. The function needs a point, not a dict.
+# if __name__ == '__main__':
+#     point = {'radius': 11.9269, 'azimuth': 90, 'polar': 45}
+#     print(get_pose_for_target_analytical(point))

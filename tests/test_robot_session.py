@@ -61,6 +61,7 @@ class TestRobotSession(snapshottest.TestCase):
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[0]))
         self.assertMatchSnapshot(str(session.arm.Ser.write.call_args_list[1]))
 
+    # noinspection PyTypeChecker
     def test_move2point(self):
         """ Test that move2point sends the expected arguments to the arm. """
         # Arrange

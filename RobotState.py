@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from numpy.linalg import norm
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional, Tuple
 from definitions import motor_names
 
 log = logging.getLogger('RobotState')
@@ -18,11 +18,11 @@ safe_ranges = \
 
 
 class RobotState:
-    shoulder_to_elbow = 9.7
-    elbow_to_wrist = 9.7
-    wrist_to_fingers = 16.2
+    shoulder_to_elbow: float = 9.7
+    elbow_to_wrist: float = 9.7
+    wrist_to_fingers: float = 16.2
 
-    def __init__(self, init_dict=None) -> None:
+    def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
             self.__dict__: Dict[str, float] = init_dict
         else:
@@ -31,19 +31,19 @@ class RobotState:
     def __repr__(self) -> str:
         return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in self.items()])
 
-    def keys(self):
+    def keys(self) -> Iterable[str]:
         return self.__dict__.keys()
 
-    def items(self):
+    def items(self) -> Iterable[Tuple[str, float]]:
         yield from vars(self).items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> float:
         return getattr(self, key)
 
     def __iter__(self) -> Iterable[float]:
         yield from [getattr(self, motor) for motor in motor_names[1:]]
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other) -> bool:  # type: ignore
         return norm([this - that for this, that in zip(self, other)]) < 2  # type: ignore
 
     def update_state(self, angle_dict: Dict[str, float]) -> None:
@@ -61,17 +61,14 @@ class RobotState:
         log.debug('Updated State:\n' + str(self))
 
     def is_state_safe(self) -> bool:
-        angles_dict = vars(self)
+        angles_dict: Dict[str, float] = vars(self)
         for key in angles_dict.keys():
             if not safe_ranges[key][0] <= angles_dict[key] <= safe_ranges[key][1]:
                 log.warning("Angle {} is unsafe for the {} motor.".format(angles_dict[key], key))
                 return False
         return True
 
-    def make_state_safe(self, *args):
-        raise NotImplementedError
-
-    def get_cartesian(self):
+    def get_cartesian(self) -> Tuple[float, float, float]:
         """
             This function returns a triple of the spherical coordinates of the tip of the fingers.
             The triple: (x, y, z) where
@@ -80,24 +77,24 @@ class RobotState:
                 - z : The direction straight up.
         """
         # Array of the link lengths
-        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
-        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
-        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+        angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians: np.ndarray = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
 
-        vertical_coordinate = \
+        vertical_coordinate: np.ndarray = \
             sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
-        azimuth = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
-        radius = norm(vertical_coordinate)
-        polar = np.deg2rad(getattr(self, 'base') + 45) if azimuth >= 0 else np.deg2rad(getattr(self, 'base') + 225)
+        azimuth: float = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
+        radius: float = norm(vertical_coordinate)
+        polar: float = np.deg2rad(getattr(self, 'base') + 45) if azimuth >= 0 else np.deg2rad(getattr(self, 'base') + 225)
 
         return \
             radius * np.sin(azimuth) * np.cos(polar), \
             radius * np.sin(azimuth) * np.sin(polar), \
             radius * np.cos(azimuth)
 
-    def get_cylindrical(self):
+    def get_cylindrical(self) -> Tuple[float, float, float]:
         """
             This function returns a triple of the cylindrical coordinates of the tip of the finger.
             The triple: (radius, polar, z) where
@@ -106,21 +103,21 @@ class RobotState:
                 - z      : The upwards direction.
         """
         # Array of the link lengths
-        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
-        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
-        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+        angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians: np.ndarray = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
 
-        vertical_coordinate = \
+        vertical_coordinate: np.ndarray = \
             sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
-        azimuth = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
-        radius = norm(vertical_coordinate)
-        polar = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
+        azimuth: float = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
+        radius: float = norm(vertical_coordinate)
+        polar: float = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
 
         return abs(radius * np.sin(azimuth)), polar, radius * np.cos(azimuth)
 
-    def get_spherical(self):
+    def get_spherical(self) -> Tuple[float, float, float]:
         """
             This function returns a triple of the spherical coordinates of the tip of the fingers.
             The triple: (radius, azimuth, polar) where
@@ -129,16 +126,16 @@ class RobotState:
                 - polar   : The horizontal angle.
         """
         # Array of the link lengths.
-        lengths = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
-        angles = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
-        radians = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
+        angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
+        radians: np.ndarray = np.deg2rad(np.array([angles[0], sum(angles[:2]), sum(angles)]))
 
-        vertical_coordinate = \
+        vertical_coordinate: np.ndarray = \
             sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
-        azimuth = np.rad2deg(np.arctan(vertical_coordinate[0] / vertical_coordinate[1]))
-        radius = norm(vertical_coordinate)
-        polar = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
+        azimuth: float = np.rad2deg(np.arctan(vertical_coordinate[0] / vertical_coordinate[1]))
+        radius: float = norm(vertical_coordinate)
+        polar: float = getattr(self, 'base') if azimuth >= 0 else getattr(self, 'base') + 180
 
         return radius, azimuth, polar

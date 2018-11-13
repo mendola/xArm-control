@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Any, Callable, Dict, Iterator, Optional
 from functools import wraps
 from itertools import count
 from serial import Serial
@@ -14,10 +14,10 @@ from robot_kinematics import get_pose_for_target_analytical
 from robot_utils import rotation_to_degrees
 
 
-def ensure_serial_connection(func):
+def ensure_serial_connection(func: Callable[..., None]) -> Callable:
     """ Ensure that a serial connection is established. Raises runtime error. """
     @wraps(func)
-    def decorator(self, *args, **kwargs):
+    def decorator(self, *args, **kwargs) -> None:  # type: ignore
         if not hasattr(self, 'Ser'):
             self.log.error('Serial connection was not established at initialization. '
                            'Cannot send nor receive data.')
@@ -27,9 +27,9 @@ def ensure_serial_connection(func):
 
 
 class RobotArm:
-    counter = count(0)
+    counter: Iterator = count(0)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.log = logging.getLogger(f'RobotArm{next(self.counter)}')
         self.State: RobotState = RobotState()
 
@@ -39,11 +39,11 @@ class RobotArm:
             self.log.warning('Failed to establish Serial connection.')
 
     @ensure_serial_connection
-    def send(self, byte_packet: bytes):
+    def send(self, byte_packet: bytes) -> None:
         self.Ser.write(byte_packet)
 
     @ensure_serial_connection
-    def receive_serial(self):
+    def receive_serial(self) -> None:
         header = (0, 0)
         while self.Ser.inWaiting():
             header = header[1], self.Ser.read()[0]
@@ -61,13 +61,13 @@ class RobotArm:
             # Reset for future messages.
             header = (0, 0)
 
-    def handle_packet(self, command_code: int, packet_data: bytes):
+    def handle_packet(self, command_code: int, packet_data: bytes) -> None:
         if command_code == commands.read_multiple_servo_positions:
             self.handle_position_packet(packet_data)
         else:
             raise NotImplementedError(f'Command code not recognized: {command_code}')
 
-    def handle_position_packet(self, packet_data: bytes):
+    def handle_position_packet(self, packet_data: bytes) -> None:
         """
             Parse a packet of position information and update the state of the robot arm.
         :param packet_data: Byte-message of position information
@@ -84,21 +84,21 @@ class RobotArm:
         except AssertionError:
             self.log.error('Invalid packet -- Wrong size: {packet_data}. Skipping state update.')
 
-    def send_beep(self):
+    def send_beep(self) -> None:
         self.send(b'\x55\x00')
 
-    def move_to_point(self, point: Point, time_ms: int):
-        computed_state: RobotState = get_pose_for_target_analytical(point)
+    def move_to_point(self, point: Point, time_ms: int) -> Optional[RobotState]:
+        computed_state: Optional[RobotState] = get_pose_for_target_analytical(point)
 
-        if not computed_state.is_state_safe():
+        if (computed_state is None) or (not computed_state.is_state_safe()):
             self.log.error('Commanded angle is not safe. Not sending.')
         else:
             degrees_dict: Dict[str, float] = vars(computed_state)
             self.send(pk.write_servo_move(degrees_dict, time_ms))
         return computed_state
         
-    def unlock_servos(self):
+    def unlock_servos(self) -> None:
         self.send(pk.write_servo_unlock())
 
-    def request_positions(self):
+    def request_positions(self) -> None:
         self.send(pk.write_request_positions())
