@@ -56,7 +56,7 @@ class RobotSession(cmd2.Cmd):
                              help="Define a cylindrical coordinate: (R, THETA, Z)")
     point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
                              help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
-    point_group.add_argument('-a', '--angle', nargs='?', type=float, default=0.0, help='Angle of approach.')
+    point_parser.add_argument('-a', '--angle', nargs='?', type=float, default=0.0, help='Angle of approach.')
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
 
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
