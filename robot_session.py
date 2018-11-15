@@ -14,12 +14,14 @@ from RobotArm import RobotArm
 
 from definitions import motor_names
 import packetmaker as pk
+from robot_kinematics import approach_point_from_angle
 
 
 class CreatePoint(argparse.Action):  # pragma: no cover
     def __init__(self, option_strings: str, dest: str, **kwargs: Any):
         super(CreatePoint, self).__init__(option_strings, dest, **kwargs)
 
+    # noinspection PyMethodOverriding
     def __call__(self, _parser, namespace: Namespace, values: List[float], _option_string):  # type: ignore
         if self.dest == 'cart':
             setattr(namespace, 'point', Point(cartesian=values))
@@ -55,6 +57,15 @@ class RobotSession(cmd2.Cmd):
     point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
                              help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
+
+    approach_parser: ArgumentParser = ArgumentParser()
+    point_group.add_argument('--cart', nargs=3, type=float, action=CreatePoint, metavar=('X', 'Y', 'Z'),
+                             help="Define a cartesian coordinate: (X, Y, Z)")
+    point_group.add_argument('--cyl', nargs=3, type=float, action=CreatePoint, metavar=('R', 'THETA', 'Z'),
+                             help="Define a cylindrical coordinate: (R, THETA, Z)")
+    point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
+                             help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
+    point_parser.add_argument('-a', '--angle', nargs='1', type=float, default=0, help='Angle of approach.')
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
 
     def __init__(self, stdin: IO = sys.stdin, stdout: IO = sys.stdout):
@@ -139,6 +150,11 @@ class RobotSession(cmd2.Cmd):
               f'Provide space separated names for any combination of:\n'
               f'  ({", ".join(motor_names[1:])})\n'
               f'The default is all motors.')
+
+    @with_category('xArm Commands')
+    @with_argparser(approach_parser)
+    def do_approach(self, arguments: Namespace):
+        self.arm.send(pk.write_servo_move(approach_point_from_angle(arguments.point, arguments.angle)))
 
     def do_eof(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """

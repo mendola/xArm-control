@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, Iterator, Optional
+from typing import Callable, Dict, Iterator, Optional
 from functools import wraps
 from itertools import count
 from serial import Serial

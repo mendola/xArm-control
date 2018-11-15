@@ -18,9 +18,9 @@ safe_ranges = \
 
 
 class RobotState:
-    shoulder_to_elbow: float = 9.7
-    elbow_to_wrist: float = 9.7
-    wrist_to_fingers: float = 16.2
+    shoulder_to_elbow: float = 10.0
+    elbow_to_wrist: float = 10.0
+    wrist_to_fingers: float = 16.5
 
     def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
@@ -87,7 +87,8 @@ class RobotState:
             sum(length * np.array([np.sin(radians), np.cos(radians)]) for length, radians in zip(lengths, radians))
         azimuth: float = np.arctan(vertical_coordinate[0] / vertical_coordinate[1])
         radius: float = norm(vertical_coordinate)
-        polar: float = np.deg2rad(getattr(self, 'base') + 45) if azimuth >= 0 else np.deg2rad(getattr(self, 'base') + 225)
+        polar: float = \
+            np.deg2rad(getattr(self, 'base') + 45) if azimuth >= 0 else np.deg2rad(getattr(self, 'base') + 225)
 
         return \
             radius * np.sin(azimuth) * np.cos(polar), \

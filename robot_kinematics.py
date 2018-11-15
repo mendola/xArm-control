@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Union
 import numpy as np
 
 from Point import Point
@@ -92,6 +92,40 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
         }
     return RobotState(degrees_dict)
 
+
+def approach_point_from_angle(point: Point, angle: Union[int, float]):
+    """
+        Calculates the robot state based upon the target point and the angle of approach.
+    :param point: The target point.
+    :param angle: The angle of approach with respect to the horizontal plane.
+    :return: RobotState of the solution.
+    """
+    link_1 = RobotState.shoulder_to_elbow
+    link_2 = RobotState.wrist_to_fingers
+    radian = np.deg2rad(angle)
+    target_point_2 = Point(
+        cylindrical=(point.cylindrical[0] - (link_2 * np.cos(radian)),
+                     point.cylindrical[1],
+                     point.cylindrical[2] - (link_2 * np.sin(radian)))
+    )
+    print(point.spherical[0], target_point_2.spherical[0])
+    alpha = np.rad2deg(np.arccos(target_point_2.spherical[0] / (2 * link_1)))
+    beta = np.rad2deg(np.arccos(1 - ((target_point_2.spherical[0] ** 2) / (2 * (link_1 ** 2)))))
+
+    degrees_dict = {
+        'base': point.cylindrical[1],
+        'shoulder': target_point_2.spherical[1] - alpha,
+        'elbow': 180 - beta,
+        'wrist': point.spherical[1] - target_point_2.spherical[1],
+        'hand': 0.0,
+        'fingers': 0.0,
+    }
+    return RobotState(degrees_dict)
+
+
+if __name__ == '__main__':
+    print(approach_point_from_angle(Point(cartesian=(10, 10, 10)), 0.0))
+    print(approach_point_from_angle(Point(cartesian=(0, 0, 36.5)), 90.0))
 
 # The below is broken. The function needs a point, not a dict.
 # if __name__ == '__main__':
