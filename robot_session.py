@@ -59,13 +59,13 @@ class RobotSession(cmd2.Cmd):
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
 
     approach_parser: ArgumentParser = ArgumentParser()
-    point_group.add_argument('--cart', nargs=3, type=float, action=CreatePoint, metavar=('X', 'Y', 'Z'),
+    approach_parser.add_argument('--cart', nargs=3, type=float, action=CreatePoint, metavar=('X', 'Y', 'Z'),
                              help="Define a cartesian coordinate: (X, Y, Z)")
-    point_group.add_argument('--cyl', nargs=3, type=float, action=CreatePoint, metavar=('R', 'THETA', 'Z'),
+    approach_parser.add_argument('--cyl', nargs=3, type=float, action=CreatePoint, metavar=('R', 'THETA', 'Z'),
                              help="Define a cylindrical coordinate: (R, THETA, Z)")
-    point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
+    approach_parser.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
                              help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
-    point_parser.add_argument('-a', '--angle', nargs='1', type=float, default=0, help='Angle of approach.')
+    approach_parser.add_argument('-a', '--angle', nargs='1', type=float, default=0, help='Angle of approach.')
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
 
     def __init__(self, stdin: IO = sys.stdin, stdout: IO = sys.stdout):
