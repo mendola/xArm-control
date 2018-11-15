@@ -116,7 +116,7 @@ def approach_point_from_angle(point: Point, angle: Union[int, float]):
         'base': point.cylindrical[1],
         'shoulder': target_point_2.spherical[1] - alpha,
         'elbow': 180 - beta,
-        'wrist': point.spherical[1] - target_point_2.spherical[1],
+        'wrist': angle,
         'hand': 0.0,
         'fingers': 0.0,
     }
@@ -125,8 +125,8 @@ def approach_point_from_angle(point: Point, angle: Union[int, float]):
 
 if __name__ == '__main__':
     print(approach_point_from_angle(Point(cartesian=(10, 10, 10)), 0.0))
-    print(approach_point_from_angle(Point(cartesian=(0, 0, 36.5)), 90.0))
-    print(approach_point_from_angle(Point(cartesian=(36.5, 0, 0)), 0))
+    print(approach_point_from_angle(Point(cartesian=(0, 0, 35.9)), 90.0))
+    print(approach_point_from_angle(Point(cartesian=(35.9, 0, 0)), 0))
 
 # The below is broken. The function needs a point, not a dict.
 # if __name__ == '__main__':
