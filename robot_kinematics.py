@@ -116,7 +116,7 @@ def approach_point_from_angle(point: Point, angle: Union[int, float]):
         'base': point.cylindrical[1],
         'shoulder': target_point_2.spherical[1] - alpha,
         'elbow': 180 - beta,
-        'wrist': angle,
+        'wrist': target_point_2.spherical[1] - angle + 90,
         'hand': 0.0,
         'fingers': 0.0,
     }
