@@ -18,9 +18,9 @@ safe_ranges = \
 
 
 class RobotState:
-    shoulder_to_elbow: float = 10.0
-    elbow_to_wrist: float = 10.0
-    wrist_to_fingers: float = 16.5
+    shoulder_to_elbow: float = 9.8
+    elbow_to_wrist: float = 9.8
+    wrist_to_fingers: float = 16.3
 
     def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
