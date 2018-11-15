@@ -147,7 +147,7 @@ class RobotSession(cmd2.Cmd):
     @with_category('xArm Commands')
     @with_argparser(point_parser)
     def do_approach(self, arguments: Namespace):
-        self.arm.send(pk.write_servo_move(approach_point_from_angle(arguments.point, arguments.angle)))
+        self.arm.send(pk.write_servo_move(approach_point_from_angle(arguments.point, arguments.angle), 1000))
 
     def do_eof(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """
