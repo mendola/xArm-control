@@ -93,30 +93,36 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     return RobotState(degrees_dict)
 
 
-def approach_point_from_angle(point: Point, angle: Union[int, float]):
+def approach_point_from_angle(target_point: Point, approach_angle: Union[int, float]) -> Optional[RobotState]:
     """
-        Calculates the robot state based upon the target point and the angle of approach.
-    :param point: The target point.
-    :param angle: The angle of approach with respect to the horizontal plane.
+        Calculates the robot state based upon the target target_point and the angle of approach.
+    :param target_point: The target target_point.
+    :param approach_angle: The angle of approach with respect to the horizontal plane.
     :return: RobotState of the solution.
     """
     link_1 = RobotState.shoulder_to_elbow
     link_2 = RobotState.wrist_to_fingers
-    radian = np.deg2rad(angle)
-    target_point_2 = Point(
-        cylindrical=(point.cylindrical[0] - (link_2 * np.cos(radian)),
-                     point.cylindrical[1],
-                     point.cylindrical[2] - (link_2 * np.sin(radian)))
+    radian = np.deg2rad(approach_angle)
+    wrist_point = Point(
+        cylindrical=(target_point.radius - (link_2 * np.cos(radian)),
+                     target_point.polar,
+                     target_point.z - (link_2 * np.sin(radian)))
     )
-    print(point.spherical[0], target_point_2.spherical[0])
-    alpha = np.rad2deg(np.arccos(target_point_2.spherical[0] / (2 * link_1)))
-    beta = np.rad2deg(np.arccos(1 - ((target_point_2.spherical[0] ** 2) / (2 * (link_1 ** 2)))))
 
+    ratio = round(wrist_point.rho / (2 * link_1), 5)
+    if ratio > 1:
+        log.error(f'Point-Angle combination not reachable: ({target_point}, {approach_angle})')
+        return None
+
+    shoulder_angle = wrist_point.azimuth - np.rad2deg(np.arccos(ratio))
+    elbow_angle = np.rad2deg(np.pi - np.arccos(1 - (2 * (ratio ** 2))))
+
+    mode = -1 if abs(target_point.polar) > 90 else 1
     degrees_dict = {
-        'base': point.cylindrical[1],
-        'shoulder': target_point_2.spherical[1] - alpha,
-        'elbow': 180 - beta,
-        'wrist': 90 - (target_point_2.spherical[1] - alpha + 180 - beta) + angle,
+        'base': ((target_point.polar + 90) % 180) - 90,
+        'shoulder': mode * shoulder_angle,
+        'elbow': mode * elbow_angle,
+        'wrist': mode * (90 - (shoulder_angle + elbow_angle) - approach_angle),
         'hand': 0.0,
         'fingers': 0.0,
     }
@@ -125,10 +131,6 @@ def approach_point_from_angle(point: Point, angle: Union[int, float]):
 
 if __name__ == '__main__':
     print(approach_point_from_angle(Point(cartesian=(10, 10, 10)), 0.0))
+    print(approach_point_from_angle(Point(cartesian=(-10, -10, 10)), 0.0))
     print(approach_point_from_angle(Point(cartesian=(0, 0, 35.9)), 90.0))
     print(approach_point_from_angle(Point(cartesian=(35.9, 0, 0)), 0))
-
-# The below is broken. The function needs a point, not a dict.
-# if __name__ == '__main__':
-#     point = {'radius': 11.9269, 'azimuth': 90, 'polar': 45}
-#     print(get_pose_for_target_analytical(point))

@@ -1,4 +1,3 @@
-import cmath
 import numpy as np
 from numpy.linalg import norm
 from typing import Optional, Sequence, Tuple
@@ -6,6 +5,7 @@ from typing import Optional, Sequence, Tuple
 
 class Point:
     """ Class for holding and converting position information.  """
+    __slots__ = ['cartesian', 'cylindrical', 'spherical', 'azimuth', 'polar', 'radius', 'rho', 'x', 'y', 'z']
 
     def __init__(self, *,
                  cartesian: Optional[Sequence[float]] = None,
@@ -27,23 +27,23 @@ class Point:
         name_value_pairs = (('cartesian', cartesian), ('cylindrical', cylindrical), ('spherical', spherical))
         var_name, coordinate = next((var_name, value) for var_name, value in name_value_pairs if value is not None)
         self.cartesian, self.cylindrical, self.spherical = getattr(self, f'from_{var_name}')(*eval(var_name))
+        self.x, self.y, self.z = self.cartesian
+        self.radius = self.cylindrical[0]
+        self.rho, self.azimuth, self.polar = self.spherical
 
     def __repr__(self) -> str:
         return (f'Point('
-                f'cartesian=({self.cartesian[0]:+0.3f}, {self.cartesian[1]:+0.3f}, {self.cartesian[2]:+0.3f}), '
-                f'cylindrical=({self.cylindrical[0]:+0.3f}, {self.cylindrical[1]:+0.3f}, {self.cylindrical[2]:+0.3f}), '
-                f'spherical=({self.spherical[0]:+0.3f}, {self.spherical[1]:+0.3f}, {self.spherical[2]:+0.3f}))')
+                f'cartesian=({self.x:+.3f}, {self.y:+.3f}, {self.z:+.3f}), '
+                f'cylindrical=({self.radius:+.3f}, {self.polar:+.3f}, {self.z:+.3f}), '
+                f'spherical=({self.rho:+.3f}, {self.azimuth:+.3f}, {self.polar:+.3f}))')
 
     def __eq__(self, other) -> bool:  # type: ignore
         cartesian_equal = np.allclose(self.cartesian, other.cartesian)
-        cylindrical_equal = \
-            np.isclose(self.cylindrical[0], other.cylindrical[0]) and \
-            np.isclose(self.cylindrical[1] % 360, other.cylindrical[1] % 360) and \
-            np.isclose(self.cylindrical[2], other.cylindrical[2])
+        cylindrical_equal = np.isclose(self.radius, other.radius)
         spherical_equal = \
-            np.isclose(self.spherical[0], other.spherical[0]) and \
-            np.isclose(self.spherical[1], other.spherical[1]) and \
-            np.isclose(self.spherical[2] % 360, other.spherical[2] % 360)
+            np.isclose(self.rho, other.rho) and \
+            np.isclose(self.azimuth, other.azimuth) and \
+            np.isclose(self.polar % 360, other.polar % 360)
         return cartesian_equal and cylindrical_equal and spherical_equal
 
     @staticmethod
@@ -52,8 +52,8 @@ class Point:
         spherical_radius = norm((x, y, z))
         polar_radius = norm((x, y))
 
-        polar_angle = np.rad2deg(cmath.polar(complex(x, y))[1]) - 45
-        azimuth = 90 - np.rad2deg(cmath.polar(complex(polar_radius, z))[1])
+        polar_angle = np.rad2deg(np.arctan2(y, x)) - 45
+        azimuth = 90 - np.rad2deg(np.arctan2(z, polar_radius))
 
         return (x, y, z), (polar_radius, polar_angle, z), (spherical_radius, azimuth, polar_angle)
 
@@ -65,7 +65,7 @@ class Point:
         y = polar_radius * np.sin(np.deg2rad(polar_angle + 45))
 
         spherical_radius = norm((polar_radius, z))
-        azimuth = 90 - np.rad2deg(cmath.polar(complex(polar_radius, z))[1])
+        azimuth = 90 - np.rad2deg(np.arctan2(z, polar_radius))
 
         return (x, y, z), (polar_radius, polar_angle, z), (spherical_radius, azimuth, polar_angle)
 

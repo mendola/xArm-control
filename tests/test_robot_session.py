@@ -81,6 +81,27 @@ class TestRobotSession(snapshottest.TestCase):
             # Assert
             self.assertEqual((test_point, test_time), mocked_move_to_point.call_args[0])
 
+    # noinspection PyTypeChecker
+    def test_approach(self):
+        """ Test that approach sends the expected command. """
+        # Arrange
+        no_serial_session = self.no_serial_create()
+        session = self.create()
+
+        test_command = '--cart 10 10 10 -a -30 -t 150'
+        test_point = Point(cartesian=(10, 10, 10))
+        test_angle = -30
+        test_time = 150
+
+        # Act
+        no_serial_session.do_approach(test_command)
+
+        with mock.patch('RobotArm.RobotArm.approach_from_angle') as mocked_approach_from_angle:
+            session.do_approach(test_command)
+
+            # Assert
+            self.assertEqual((test_point, test_angle, test_time), mocked_approach_from_angle.call_args[0])
+
     def test_unlock(self):
         """ Test that unlock sends the expected command. """
         # Arrange

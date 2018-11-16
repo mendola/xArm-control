@@ -1,16 +1,16 @@
 import logging
-from typing import Callable, Dict, Iterator, Optional
 from functools import wraps
 from itertools import count
 from serial import Serial
 from serial.serialutil import SerialException
+from typing import Callable, Dict, Iterator, Optional, Union
 
 from Point import Point
 from RobotState import RobotState
 
-from definitions import commands, motor_names
 import packetmaker as pk
-from robot_kinematics import get_pose_for_target_analytical
+from definitions import commands, motor_names
+from robot_kinematics import get_pose_for_target_analytical, approach_point_from_angle
 from robot_utils import rotation_to_degrees
 
 
@@ -91,12 +91,22 @@ class RobotArm:
         computed_state: Optional[RobotState] = get_pose_for_target_analytical(point)
 
         if (computed_state is None) or (not computed_state.is_state_safe()):
-            self.log.error('Commanded angle is not safe. Not sending.')
+            self.log.error('Commanded solution is not safe. Not sending.')
         else:
             degrees_dict: Dict[str, float] = vars(computed_state)
             self.send(pk.write_servo_move(degrees_dict, time_ms))
         return computed_state
-        
+
+    def approach_from_angle(self, point: Point, angle: Union[int, float], time_ms: int) -> RobotState:
+        computed_state: Optional[RobotState] = approach_point_from_angle(point, angle)
+
+        if (computed_state is None) or (not computed_state.is_state_safe()):
+            self.log.error('Commanded solution is not safe. Not sending.')
+        else:
+            self.send(pk.write_servo_move(vars(computed_state), time_ms))
+            self.State = computed_state
+        return self.State
+
     def unlock_servos(self) -> None:
         self.send(pk.write_servo_unlock())
 

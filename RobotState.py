@@ -21,6 +21,7 @@ class RobotState:
     shoulder_to_elbow: float = 9.8
     elbow_to_wrist: float = 9.8
     wrist_to_fingers: float = 16.3
+    radius = shoulder_to_elbow + elbow_to_wrist + wrist_to_fingers
 
     def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
@@ -29,7 +30,7 @@ class RobotState:
             self.__dict__: Dict[str, float] = {motor: 0.0 for motor in motor_names[1:]}
 
     def __repr__(self) -> str:
-        return '\n'.join([f'Servo {motor:<8s} : {angle:>+5.2f}' for motor, angle in self.items()])
+        return '\n'.join([f'Servo {motor:<8s} : {angle:>+7.2f}' for motor, angle in self.items()])
 
     def keys(self) -> Iterable[str]:
         return self.__dict__.keys()

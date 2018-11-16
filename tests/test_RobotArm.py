@@ -159,6 +159,33 @@ class TestRobotArm(unittest.TestCase):
         self.assertIsInstance(returned_state, mock.MagicMock)
         self.assertEqual((vars(mocked_computed_state), test_time), mocked_write_servo_move.call_args[0])
 
+    @mock.patch('RobotArm.RobotArm.send')
+    @mock.patch('RobotArm.pk.write_servo_move', return_values=b'move')
+    @mock.patch('RobotArm.approach_point_from_angle', return_value=mock.MagicMock())
+    def test_approach_from_angle(self, mocked_get_pose, mocked_write_servo_move, _mocked_send):
+        """ Test that move_to_point tests valid messages as expected. """
+        # Arrange
+        test_time = 250
+        test_angle = 30
+        test_arm = self.create()
+        mocked_point = mock.MagicMock()
+        mocked_computed_state = mocked_get_pose.return_value
+        mocked_computed_state.is_state_safe.return_value = False
+
+        # Act
+        returned_state = test_arm.approach_from_angle(mocked_point, test_angle, test_time)
+        self.assertEqual(test_arm.State, returned_state)
+
+        # Arrange
+        mocked_computed_state.is_state_safe.return_value = True
+
+        # Act
+        returned_state = test_arm.approach_from_angle(mocked_point, test_angle, test_time)
+
+        # Assert
+        self.assertIsInstance(returned_state, mock.MagicMock)
+        self.assertEqual((vars(mocked_computed_state), test_time), mocked_write_servo_move.call_args[0])
+
     @mock.patch('RobotArm.pk.write_servo_unlock', return_values=b'unlock')
     @mock.patch('RobotArm.RobotArm.send')
     def test_unlock_servos(self, mocked_send, _mocked_write_servo_unlock):

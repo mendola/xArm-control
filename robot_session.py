@@ -14,7 +14,6 @@ from RobotArm import RobotArm
 
 from definitions import motor_names
 import packetmaker as pk
-from robot_kinematics import approach_point_from_angle
 
 
 class CreatePoint(argparse.Action):  # pragma: no cover
@@ -123,6 +122,27 @@ class RobotSession(cmd2.Cmd):
               f'    * -t TIME')
 
     @with_category('xArm Commands')
+    @with_argparser(point_parser)
+    def do_approach(self, arguments: Namespace) -> None:
+        """ Approach the arm from a given angle. """
+        try:
+            self.arm.approach_from_angle(arguments.point, arguments.angle, arguments.time)
+        except RuntimeError:
+            self.log.error('RuntimeError: Skipping approach command.')
+
+    @staticmethod
+    def help_approach() -> None:  # pragma: no cover
+        print(f'Approach the point specified from the angle specified. \n'
+              f'  First argument should be one of: \n'
+              f'    * --cart X Y Z \n'
+              f'    * --cyl R THETA Z \n'
+              f'    * --sphere R AZIMUTH THETA \n'
+              f'  Second argument should the angle of approach, measured from the horizontal: \n'
+              f'    * -a ANGLE \n'
+              f'  Second argument should be time to move in milliseconds: \n'
+              f'    * -t TIME')
+
+    @with_category('xArm Commands')
     def do_unlock(self, statement: Statement) -> None:
         """ Unlock servo motors. """
         input_motors: List[str] = [motor for motor in statement.args.split()]
@@ -143,11 +163,6 @@ class RobotSession(cmd2.Cmd):
               f'Provide space separated names for any combination of:\n'
               f'  ({", ".join(motor_names[1:])})\n'
               f'The default is all motors.')
-
-    @with_category('xArm Commands')
-    @with_argparser(point_parser)
-    def do_approach(self, arguments: Namespace):
-        self.arm.send(pk.write_servo_move(vars(approach_point_from_angle(arguments.point, arguments.angle)), 1000))
 
     def do_eof(self, _statement: Statement) -> bool:  # pragma: no cover
         """ Exit CLI. """
