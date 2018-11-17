@@ -56,6 +56,7 @@ class RobotSession(cmd2.Cmd):
     point_group.add_argument('--sphere', nargs=3, type=float, action=CreatePoint, metavar=('RHO', 'AZIMUTH', 'THETA'),
                              help="Define a spherical coordinate: (RHO, AZIMUTH, THETA)")
     point_parser.add_argument('-a', '--angle', nargs='?', type=float, default=0.0, help='Angle of approach.')
+    point_parser.add_argument('-o', '--offset', nargs='?', type=float, default=0.0, help='Offset from target point.')
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
 
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
@@ -124,9 +125,9 @@ class RobotSession(cmd2.Cmd):
     @with_category('xArm Commands')
     @with_argparser(point_parser)
     def do_approach(self, arguments: Namespace) -> None:
-        """ Approach the arm from a given angle. """
+        """ Approach the arm from a given angle with a given offset. """
         try:
-            self.arm.approach_from_angle(arguments.point, arguments.angle, arguments.time)
+            self.arm.approach_from_angle(arguments.point, arguments.angle, arguments.time, arguments.offset)
         except RuntimeError:
             self.log.error('RuntimeError: Skipping approach command.')
 

@@ -97,8 +97,8 @@ class RobotArm:
             self.send(pk.write_servo_move(degrees_dict, time_ms))
         return computed_state
 
-    def approach_from_angle(self, point: Point, angle: Union[int, float], time_ms: int) -> RobotState:
-        computed_state: Optional[RobotState] = approach_point_from_angle(point, angle)
+    def approach_from_angle(self, point: Point, angle: Union[int, float], time_ms: int, offset: float=0.0) -> RobotState:
+        computed_state: Optional[RobotState] = approach_point_from_angle(point, angle, offset)
 
         if (computed_state is None) or (not computed_state.is_state_safe()):
             self.log.error('Commanded solution is not safe. Not sending.')

@@ -90,7 +90,7 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     return RobotState(degrees_dict)
 
 
-def approach_point_from_angle(target_point: Point, approach_angle: Union[int, float]) -> Optional[RobotState]:
+def approach_point_from_angle(target_point: Point, approach_angle: Union[int, float], offset: float=0.0) -> Optional[RobotState]:
     """
         Calculates the robot state based upon the target target_point and the angle of approach.
     :param target_point: The target target_point.
@@ -100,23 +100,29 @@ def approach_point_from_angle(target_point: Point, approach_angle: Union[int, fl
     link_1 = shoulder_to_elbow
     link_2 = wrist_to_fingers
     radian = np.deg2rad(approach_angle)
+    offset_target_point = Point(
+        cylindrical=(target_point.radius - offset*np.cos(radian),
+                    target_point.polar,
+                    target_point.z - offset * np.sin(radian)
+        )
+    )
     wrist_point = Point(
-        cylindrical=(target_point.radius - (link_2 * np.cos(radian)),
-                     target_point.polar,
-                     target_point.z - (link_2 * np.sin(radian)))
+        cylindrical=(offset_target_point.radius - (link_2 * np.cos(radian)),
+                     offset_target_point.polar,
+                     offset_target_point.z - (link_2 * np.sin(radian)))
     )
 
     ratio = round(wrist_point.rho / (2 * link_1), 5)
     if ratio > 1:
-        log.error(f'Point-Angle combination not reachable: ({target_point}, {approach_angle})')
+        log.error(f'Point-Angle combination not reachable: ({offset_target_point}, {approach_angle})')
         return None
 
     shoulder_angle = wrist_point.azimuth - np.rad2deg(np.arccos(ratio))
     elbow_angle = np.rad2deg(np.pi - np.arccos(1 - (2 * (ratio ** 2))))
 
-    mode = -1 if abs(target_point.polar) > 90 else 1
+    mode = -1 if abs(offset_target_point.polar) > 90 else 1
     degrees_dict = {
-        'base': ((target_point.polar + 90) % 180) - 90,
+        'base': ((offset_target_point.polar + 90) % 180) - 90,
         'shoulder': mode * shoulder_angle,
         'elbow': mode * elbow_angle,
         'wrist': mode * (90 - (shoulder_angle + elbow_angle) - approach_angle),

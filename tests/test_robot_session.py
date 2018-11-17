@@ -92,6 +92,7 @@ class TestRobotSession(snapshottest.TestCase):
         test_point = Point(cartesian=(10, 10, 10))
         test_angle = -30
         test_time = 150
+        test_offset = 0.0
 
         # Act
         no_serial_session.do_approach(test_command)
@@ -100,7 +101,7 @@ class TestRobotSession(snapshottest.TestCase):
             session.do_approach(test_command)
 
             # Assert
-            self.assertEqual((test_point, test_angle, test_time), mocked_approach_from_angle.call_args[0])
+            self.assertEqual((test_point, test_angle, test_time, test_offset), mocked_approach_from_angle.call_args[0])
 
     def test_unlock(self):
         """ Test that unlock sends the expected command. """
