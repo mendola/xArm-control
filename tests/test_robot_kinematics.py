@@ -7,6 +7,7 @@ from RobotState import RobotState
 
 from definitions import joints_list
 from robot_kinematics import approach_point_from_angle, get_pose_for_target_analytical
+from Point import Point
 
 
 class TestRobotKinematics(unittest.TestCase):
@@ -18,15 +19,16 @@ class TestRobotKinematics(unittest.TestCase):
     
     def test_get_pose_for_target_analytical(self):
         test_inputs = [
-            Point(spherical=(11.9269, 90, 45)),
-            Point(spherical=(11.9269, 90, 110)),
-            Point(spherical=(36.5, 0, 0))
+            Point(spherical=(11.7597, 90, 45)),
+            Point(spherical=(11.7597, 90, 110)),
+            Point(spherical=(35.9, 0, 0)),
+            Point(spherical=(37,90,45))
         ]
 
         target_results = [
             RobotState({
                 'base': -45,
-                'shoulder': -33.02,
+                'shoulder': -33.5549,
                 'elbow': 90.0,
                 'wrist': 90.0,
                 'hand': 0,
@@ -34,7 +36,7 @@ class TestRobotKinematics(unittest.TestCase):
             }),
             RobotState({
                 'base': 70,
-                'shoulder': 33.02,
+                'shoulder': 33.5549,
                 'elbow': -90.0,
                 'wrist': -90.0,
                 'hand': 0,
@@ -47,12 +49,17 @@ class TestRobotKinematics(unittest.TestCase):
                 'wrist': 0,
                 'hand': 0,
                 'fingers': 0
-            })
+            }),
+            None
         ]
 
         for test_input, target in zip(test_inputs, target_results):
             out = get_pose_for_target_analytical(test_input)
-            self.robot_state_assert_almost_equal(out, target, 0.1)
+            if not isinstance(target, RobotState):
+                self.assertTrue(not isinstance(out, RobotState))
+                self.assertEqual(target,out)
+            else:
+                self.robot_state_assert_almost_equal(out, target, 0.1)
 
     def test_approach_point_from_angle(self):
         """ Test that approach_point_from_angle returns expected results. """
@@ -81,7 +88,7 @@ class TestRobotKinematics(unittest.TestCase):
         state_cube_corner_2 = approach_point_from_angle(test_point_cube_corner_2, test_angle_cube_corner)
 
         # Assert
-        self.assertDictEqual(expected_state_straight_up, vars(state_straight_up))
+        self.robot_state_assert_almost_equal(expected_state_straight_up, vars(state_straight_up),1e-8) 
         self.assertDictEqual(expected_state_horizontal, vars(state_horizontal))
         self.robot_state_assert_almost_equal(expected_state_cube_corner_1, vars(state_cube_corner_1), 0.01)
         self.robot_state_assert_almost_equal(expected_state_cube_corner_2, vars(state_cube_corner_2), 0.01)

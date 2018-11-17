@@ -3,11 +3,12 @@ import numpy as np
 
 from RobotState import RobotState
 from definitions import motor_names
+from definitions import shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
 
 
 class TestRobotState(unittest.TestCase):
     test_state = RobotState()
-    arm_length = test_state.shoulder_to_elbow + test_state.elbow_to_wrist + test_state.wrist_to_fingers
+    arm_length = shoulder_to_elbow + elbow_to_wrist + wrist_to_fingers
 
     def test_keys(self):
         """ Test that keys returns the expected dictionary. """
@@ -88,7 +89,7 @@ class TestRobotState(unittest.TestCase):
 
         zigzag = {'base': -30.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': -45.0}
         expected_zigzag = \
-            ((np.sqrt(2) * self.test_state.shoulder_to_elbow) + self.test_state.wrist_to_fingers, 0.0, -30.0)
+            ((np.sqrt(2) * shoulder_to_elbow) + wrist_to_fingers, 0.0, -30.0)
 
         # Act & Assert
         test_arm.update_state(straight_up)
@@ -112,7 +113,7 @@ class TestRobotState(unittest.TestCase):
         expected_horizontal = (self.arm_length / np.sqrt(2), self.arm_length / np.sqrt(2), 0.0)
 
         zigzag = {'base': 45.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': 45.0}
-        expected_zigzag = (0.0, self.test_state.wrist_to_fingers, (np.sqrt(2) * self.test_state.shoulder_to_elbow))
+        expected_zigzag = (0.0, wrist_to_fingers, (np.sqrt(2) * shoulder_to_elbow))
 
         # Act & Assert
         test_arm.update_state(straight_up)
@@ -139,7 +140,7 @@ class TestRobotState(unittest.TestCase):
 
         zigzag = {'base': 15.0, 'shoulder': -45.0, 'elbow': 90.0, 'wrist': -45.0}
         expected_zigzag = \
-            (0.0, 15.0, (np.sqrt(2) * self.test_state.shoulder_to_elbow) + self.test_state.wrist_to_fingers)
+            (0.0, 15.0, (np.sqrt(2) * shoulder_to_elbow) + wrist_to_fingers)
 
         # Act & Assert
         test_arm.update_state(straight_up)

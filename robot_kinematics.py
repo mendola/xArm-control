@@ -4,6 +4,7 @@ import numpy as np
 
 from Point import Point
 from RobotState import RobotState
+from definitions import shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
 
 
 log = logging.getLogger('RobotKinematics')
@@ -18,7 +19,7 @@ def reachable(_target_point: Point) -> bool:
 def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     """
         This function returns a RobotState that will move the center of the closed
-        gripper fingers to the target at target_point.
+        gripper fingers to the target at target_point. If no solution exists, it returns None.
         The function finds the inverse kinematics solution where the elbow and wrist
         angles are equal and in an 'elbow-up' configuration.
             - target_point: The target location to bring the gripper.
@@ -34,45 +35,41 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     target_azimuth = np.deg2rad(target_point.spherical[1])
     target_polar = np.deg2rad(target_point.spherical[2])
 
-    # Should we have mode be 1, -1?
+    # Determine whether arm should 'lean' forward or backward
     if (-np.pi / 2) <= target_polar <= (np.pi / 2):
         mode = 'forward'
     else:
         mode = 'backward'
 
     if mode == 'forward':
-        base_angle = target_polar  # need to adjust sign
+        base_angle = target_polar
     else:
         if target_polar > 0:
             base_angle = target_polar - np.pi
         else:
             base_angle = np.pi + target_polar
 
-    # You gotta explain these magic numbers
-    A = 4*10.0**2 + 4*6.5*10.0
-    B = -(4*10.0**2 + 2*6.5*10.0)
-    C = 6.5**2 + 10.0**2 - target_radius**2
+    # Quadratic Eq Coefficients from IK solution
+    A = 4*shoulder_to_elbow**2 + 4*(wrist_to_fingers - shoulder_to_elbow)*shoulder_to_elbow  # 
+    B = -(4*shoulder_to_elbow**2 + 2*(wrist_to_fingers - shoulder_to_elbow)*shoulder_to_elbow)
+    C = (wrist_to_fingers - shoulder_to_elbow)**2 + shoulder_to_elbow**2 - target_radius**2
 
-    # You can use np.root([A, B, C])
-    cos_solution1 = (-B + np.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
-    cos_solution2 = (-B - np.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
-
-    # You can just take out the 'if's here and arccos will return nan if solution is outside the domain.
-    #  Numpy's nan value fails all inequality comparisons.
+    cos_solutions = np.roots([A, B, C])
     np.warnings.filterwarnings('ignore', r'invalid value encountered in arccos')
-    solution1 = np.arccos(cos_solution1) if -1 <= cos_solution1 <= 1 else None
-    solution2 = np.arccos(cos_solution2) if -1 <= cos_solution2 <= 1 else None
+    solutions = np.arccos(cos_solutions)    
+    elbow_angle = wrist_angle = None
+    # Choose valid solution (if any)
+    for solution in solutions:
+        if not np.isnan(solution) and solution >= np.pi/2:
+            elbow_angle = wrist_angle = solution
+            break
     
-    if solution1 and solution1 >= np.pi/2: 
-        elbow_angle = wrist_angle = solution1
-    elif solution2 and solution2 >= np.pi/2:
-        elbow_angle = wrist_angle = solution2
-    else:
-        log.warning("No solution calculated.")
+    if elbow_angle == None:
+        log.warning("No solution found.")
         return None
-    #                                            magic number
-    azimuth_offset = np.pi - (elbow_angle - np.arcsin(6.5 * np.sin(elbow_angle) / target_radius))
-    shoulder_angle = target_azimuth - azimuth_offset  # need to adjust sign
+
+    azimuth_offset = np.pi - (elbow_angle - np.arcsin((wrist_to_fingers - shoulder_to_elbow) * np.sin(elbow_angle) / target_radius))
+    shoulder_angle = target_azimuth - azimuth_offset 
     elbow_angle = np.pi - elbow_angle
     wrist_angle = np.pi - wrist_angle
 
@@ -100,8 +97,8 @@ def approach_point_from_angle(target_point: Point, approach_angle: Union[int, fl
     :param approach_angle: The angle of approach with respect to the horizontal plane.
     :return: RobotState of the solution.
     """
-    link_1 = RobotState.shoulder_to_elbow
-    link_2 = RobotState.wrist_to_fingers
+    link_1 = shoulder_to_elbow
+    link_2 = wrist_to_fingers
     radian = np.deg2rad(approach_angle)
     wrist_point = Point(
         cylindrical=(target_point.radius - (link_2 * np.cos(radian)),

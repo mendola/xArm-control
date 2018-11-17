@@ -17,3 +17,7 @@ commands = AttrDict({
 joints_list = ['base', 'shoulder', 'elbow', 'wrist', 'hand', 'fingers']
 motor_ids = AttrDict({'base': 2, 'shoulder': 4, 'elbow': 3, 'wrist': 5, 'hand': 6, 'fingers': 1})
 motor_names = ['', ] + [name for name, _ in sorted(motor_ids.items(), key=lambda pair: pair[1])]
+
+shoulder_to_elbow: float = 9.8
+elbow_to_wrist: float = 9.8
+wrist_to_fingers: float = 16.3

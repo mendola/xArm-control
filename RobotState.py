@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from numpy.linalg import norm
 from typing import Dict, Iterable, Optional, Tuple
-from definitions import motor_names
+from definitions import motor_names,shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
 
 log = logging.getLogger('RobotState')
 
@@ -18,11 +18,7 @@ safe_ranges = \
 
 
 class RobotState:
-    shoulder_to_elbow: float = 9.8
-    elbow_to_wrist: float = 9.8
-    wrist_to_fingers: float = 16.3
     radius = shoulder_to_elbow + elbow_to_wrist + wrist_to_fingers
-
     def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
             self.__dict__: Dict[str, float] = init_dict
@@ -78,7 +74,7 @@ class RobotState:
                 - z : The direction straight up.
         """
         # Array of the link lengths
-        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([shoulder_to_elbow, elbow_to_wrist, wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
         angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
@@ -105,7 +101,7 @@ class RobotState:
                 - z      : The upwards direction.
         """
         # Array of the link lengths
-        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([shoulder_to_elbow, elbow_to_wrist, wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
         angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
@@ -128,7 +124,7 @@ class RobotState:
                 - polar   : The horizontal angle.
         """
         # Array of the link lengths.
-        lengths: np.ndarray = np.array([self.shoulder_to_elbow, self.elbow_to_wrist, self.wrist_to_fingers])
+        lengths: np.ndarray = np.array([shoulder_to_elbow, elbow_to_wrist, wrist_to_fingers])
 
         # Array of angles and partial sums (in radians).
         angles: np.ndarray = np.array([getattr(self, 'shoulder'), getattr(self, 'elbow'), getattr(self, 'wrist')])
