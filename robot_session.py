@@ -58,6 +58,8 @@ class RobotSession(cmd2.Cmd):
     point_parser.add_argument('-a', '--angle', nargs='?', type=float, default=0.0, help='Angle of approach.')
     point_parser.add_argument('-o', '--offset', nargs='?', type=float, default=0.0, help='Offset from target point.')
     point_parser.add_argument('-t', '--time', nargs='?', type=int, default=1000, help='Time interval in milliseconds.')
+    point_parser.add_argument('-f', '--fingers', nargs='?', type=float, default=None, help='Finger Position in degrees')
+    point_parser.add_argument('--hand', nargs='?', type=float, default=None, help='Hand Position in degrees')
 
     # ----------------------------------------------- Argument Parsers ----------------------------------------------- #
 
@@ -127,7 +129,7 @@ class RobotSession(cmd2.Cmd):
     def do_approach(self, arguments: Namespace) -> None:
         """ Approach the arm from a given angle with a given offset. """
         try:
-            self.arm.approach_from_angle(arguments.point, arguments.angle, arguments.time, arguments.offset)
+            self.arm.approach_from_angle(arguments.point, arguments.angle, arguments.time, arguments.offset, arguments.fingers, arguments.hand)
         except RuntimeError:
             self.log.error('RuntimeError: Skipping approach command.')
 

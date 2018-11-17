@@ -90,7 +90,7 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     return RobotState(degrees_dict)
 
 
-def approach_point_from_angle(target_point: Point, approach_angle: Union[int, float], offset: float=0.0) -> Optional[RobotState]:
+def approach_point_from_angle(target_point: Point, approach_angle: Union[int, float], finger_position: float=0.0, wrist_position: float=None, offset: float=0.0, ) -> Optional[RobotState]:
     """
         Calculates the robot state based upon the target target_point and the angle of approach.
     :param target_point: The target target_point.
