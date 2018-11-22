@@ -7,22 +7,21 @@ from RobotState import RobotState
 
 from definitions import joints_list
 from robot_kinematics import approach_point_from_angle, get_pose_for_target_analytical
-from Point import Point
 
 
 class TestRobotKinematics(unittest.TestCase):
     def robot_state_assert_almost_equal(self, stateA, stateB, thresh):
-        are_equal = True
         for joint in joints_list:
             dist = abs(stateA[joint] - stateB[joint])
-            self.assertLess(dist, thresh, msg="{} failed. It was {} but should be {}".format(joint,stateA[joint], stateB[joint]))
+            self.assertLess(dist, thresh,
+                            msg="{} failed. It was {} but should be {}".format(joint, stateA[joint], stateB[joint]))
     
     def test_get_pose_for_target_analytical(self):
         test_inputs = [
             Point(spherical=(11.7597, 90, 45)),
             Point(spherical=(11.7597, 90, 110)),
             Point(spherical=(35.9, 0, 0)),
-            Point(spherical=(37,90,45))
+            Point(spherical=(37, 90, 45))
         ]
 
         target_results = [
@@ -57,7 +56,7 @@ class TestRobotKinematics(unittest.TestCase):
             out = get_pose_for_target_analytical(test_input)
             if not isinstance(target, RobotState):
                 self.assertTrue(not isinstance(out, RobotState))
-                self.assertEqual(target,out)
+                self.assertEqual(target, out)
             else:
                 self.robot_state_assert_almost_equal(out, target, 0.1)
 
@@ -88,8 +87,8 @@ class TestRobotKinematics(unittest.TestCase):
         state_cube_corner_2 = approach_point_from_angle(test_point_cube_corner_2, test_angle_cube_corner)
 
         # Assert
-        self.robot_state_assert_almost_equal(expected_state_straight_up, vars(state_straight_up),1e-8) 
-        self.assertDictEqual(expected_state_horizontal, vars(state_horizontal))
+        self.robot_state_assert_almost_equal(expected_state_straight_up, vars(state_straight_up), 1e-8)
+        self.robot_state_assert_almost_equal(expected_state_horizontal, vars(state_horizontal), 1e-8)
         self.robot_state_assert_almost_equal(expected_state_cube_corner_1, vars(state_cube_corner_1), 0.01)
         self.robot_state_assert_almost_equal(expected_state_cube_corner_2, vars(state_cube_corner_2), 0.01)
         self.assertIsNone(approach_point_from_angle(invalid_point, test_angle_straight_up))

@@ -4,7 +4,7 @@ import numpy as np
 
 from Point import Point
 from RobotState import RobotState
-from definitions import shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
+from definitions import shoulder_to_elbow, wrist_to_fingers
 
 
 log = logging.getLogger('RobotKinematics')
@@ -15,7 +15,6 @@ def reachable(_target_point: Point) -> bool:
     return True
 
 
-# noinspection PyPep8Naming
 def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
     """
         This function returns a RobotState that will move the center of the closed
@@ -64,11 +63,12 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
             elbow_angle = wrist_angle = solution
             break
     
-    if elbow_angle == None:
+    if elbow_angle is None:
         log.warning("No solution found.")
         return None
 
-    azimuth_offset = np.pi - (elbow_angle - np.arcsin((wrist_to_fingers - shoulder_to_elbow) * np.sin(elbow_angle) / target_radius))
+    azimuth_offset = \
+        np.pi - (elbow_angle - np.arcsin((wrist_to_fingers - shoulder_to_elbow) * np.sin(elbow_angle) / target_radius))
     shoulder_angle = target_azimuth - azimuth_offset 
     elbow_angle = np.pi - elbow_angle
     wrist_angle = np.pi - wrist_angle
