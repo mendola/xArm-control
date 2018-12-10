@@ -34,7 +34,7 @@ class RobotArm:
         self.State: RobotState = RobotState()
 
         try:
-            self.Ser: Serial = Serial('/dev/ttyACM0', 9600)
+            self.Ser: Serial = Serial('/dev/serial0', 9600)
         except SerialException:
             self.log.warning('Failed to establish Serial connection.')
 
