@@ -2,7 +2,8 @@ import logging
 import numpy as np
 from numpy.linalg import norm
 from typing import Dict, Iterable, Optional, Tuple
-from definitions import motor_names,shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
+
+from definitions import motor_names, shoulder_to_elbow, elbow_to_wrist, wrist_to_fingers
 
 log = logging.getLogger('RobotState')
 
@@ -19,6 +20,7 @@ safe_ranges = \
 
 class RobotState:
     radius = shoulder_to_elbow + elbow_to_wrist + wrist_to_fingers
+
     def __init__(self, init_dict: Optional[Dict[str, float]] = None):
         if init_dict:
             self.__dict__: Dict[str, float] = init_dict

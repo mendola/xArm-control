@@ -147,7 +147,7 @@ class TestRobotArm(unittest.TestCase):
         mocked_computed_state.is_state_safe.return_value = False
 
         # Act
-        returned_state = test_arm.move_to_point(mocked_point, test_time)
+        _returned_state = test_arm.move_to_point(mocked_point, test_time)
 
         # Arrange
         mocked_computed_state.is_state_safe.return_value = True

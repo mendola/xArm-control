@@ -3,7 +3,7 @@ import numpy as np
 
 from RobotState import RobotState
 from definitions import motor_names
-from definitions import shoulder_to_elbow,elbow_to_wrist,wrist_to_fingers
+from definitions import shoulder_to_elbow, elbow_to_wrist, wrist_to_fingers
 
 
 class TestRobotState(unittest.TestCase):
@@ -64,6 +64,7 @@ class TestRobotState(unittest.TestCase):
         expected_zeros = {motor: 0.0 for motor in motor_names[1:]}
 
         # Act & Assert
+        # noinspection PyTypeChecker
         test_arm.update_state(test_update_1)
         self.assertDictEqual(expected_zeros, vars(test_arm))
 
@@ -166,25 +167,26 @@ class TestRobotState(unittest.TestCase):
 
             # Assert
             self.assertAlmostEqual(np.linalg.norm(np.array(test_arm.get_cartesian())), test_arm.get_spherical()[0])
-            self.assertAlmostEqual(np.linalg.norm(np.array(test_arm.get_cartesian()[:2])), test_arm.get_cylindrical()[0])
+            self.assertAlmostEqual(
+                np.linalg.norm(np.array(test_arm.get_cartesian()[:2])), test_arm.get_cylindrical()[0])
             self.assertAlmostEqual(test_arm.get_cartesian()[2], test_arm.get_cylindrical()[2])
             self.assertAlmostEqual(test_arm.get_cylindrical()[1], test_arm.get_spherical()[2])
 
     def test_is_state_safe(self):
         """ Test is_state_safe """
-        test_states= [
+        test_states = [
             {'base': 0, 'shoulder': 0, 'elbow': 0, 'wrist': 0, 'hand': 0, 'fingers': 0},
             {'base': 120, 'shoulder': 120, 'elbow': 120, 'wrist': 120, 'hand': 120, 'fingers': 120},
             {'base': -120, 'shoulder': -120, 'elbow': -120, 'wrist': -120, 'hand': -120, 'fingers': -120},        
             {'base': -120, 'shoulder': 93, 'elbow': -120, 'wrist': 120, 'hand': -120, 'fingers': -49}            
         ]
 
-        expected_results= [
+        expected_results = [
             True,
             False,
             False,
             True
         ]
 
-        for state, expected_bool in zip(test_states,expected_results):
-            self.assertEqual(RobotState(state).is_state_safe(),expected_bool)
+        for state, expected_bool in zip(test_states, expected_results):
+            self.assertEqual(RobotState(state).is_state_safe(), expected_bool)
