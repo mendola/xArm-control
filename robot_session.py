@@ -109,7 +109,7 @@ class RobotSession(cmd2.Cmd):
     def do_move2point(self, arguments: Namespace) -> None:
         """ Move the arm to the point specified. """
         try:
-            pose = self.arm.move_to_point(arguments.point, arguments.time)
+            pose = self.arm.move_to_point(arguments.point, arguments.time, arguments.fingers, arguments.hand)
             self.log.info(pose)
         except RuntimeError:
             self.log.error('RuntimeError: Skipping move_to_point command.')
@@ -142,7 +142,7 @@ class RobotSession(cmd2.Cmd):
               f'    * --sphere R AZIMUTH THETA \n'
               f'  Second argument should the angle of approach, measured from the horizontal: \n'
               f'    * -a ANGLE \n'
-              f'  Second argument should be time to move in milliseconds: \n'
+              f'  Third argument should be time to move in milliseconds: \n'
               f'    * -t TIME')
 
     @with_category('xArm Commands')

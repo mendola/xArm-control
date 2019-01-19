@@ -87,14 +87,23 @@ class RobotArm:
     def send_beep(self) -> None:
         self.send(b'\x55\x00')
 
-    def move_to_point(self, point: Point, time_ms: int) -> Optional[RobotState]:
+    def move_to_point(self, point: Point, time_ms: int, finger_position: float=None, hand_position: float=None) -> Optional[RobotState]:
         computed_state: Optional[RobotState] = get_pose_for_target_analytical(point)
 
+        if not finger_position:
+            finger_position = self.State.fingers
+        if not hand_position:
+            hand_position = self.State.hand
+
+        computed_state.hand = hand_position
+        computed_state.fingers = finger_position
+	
         if (computed_state is None) or (not computed_state.is_state_safe()):
             self.log.error('Commanded solution is not safe. Not sending.')
         else:
             degrees_dict: Dict[str, float] = vars(computed_state)
             self.send(pk.write_servo_move(degrees_dict, time_ms))
+            self.State.update_state(degrees_dict)
         return computed_state
 
     def approach_from_angle(self, point: Point, angle: Union[int, float], time_ms: int, offset: float=0.0, finger_position: float=None, hand_position: float=None) -> RobotState:
