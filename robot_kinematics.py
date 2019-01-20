@@ -41,12 +41,12 @@ def get_pose_for_target_analytical(target_point: Point) -> Optional[RobotState]:
         mode = 'backward'
 
     if mode == 'forward':
-        base_angle = target_polar
+        base_angle = -target_polar
     else:
         if target_polar > 0:
-            base_angle = target_polar - np.pi
+            base_angle = np.pi - target_polar
         else:
-            base_angle = np.pi + target_polar
+            base_angle = -(np.pi + target_polar)
 
     # Quadratic Eq Coefficients from IK solution
     A = 4*shoulder_to_elbow**2 + 4*(wrist_to_fingers - shoulder_to_elbow)*shoulder_to_elbow  # 

@@ -175,6 +175,48 @@ class RobotSession(cmd2.Cmd):
     def default(self, statement: Statement) -> None:  # pragma: no cover
         print(f'*** Command <{statement.command}> not recognized ***')
 
+    @with_category('xArm Commands')
+    @with_argparser(point_parser)
+    def do_pick(self, arguments: Namespace) -> None:
+        """ Grab object of specified location and width. """
+        try:
+            pose = self.arm.pick_at_point(arguments.point, arguments.time, arguments.fingers)
+            self.log.info(pose)
+        except RuntimeError:
+            self.log.error('RuntimeError: Skipping move_to_point command.')
+
+    @staticmethod
+    def help_pick() -> None:  # pragma: no cover
+        print(f'Grab object of specified location and width.. \n'
+              f'  First argument should be one of: \n'
+              f'    * --cart X Y Z \n'
+              f'    * --cyl R THETA Z \n'
+              f'    * --sphere R AZIMUTH THETA \n'
+              f'  Second argument should be time to move in milliseconds: \n'
+              f'    * -t TIME'
+              f'  Third argument should be finger angle when fingers are grabbing object: \n'
+              f'    * -f FINGERS_ANGLE')
+
+    @with_category('xArm Commands')
+    @with_argparser(point_parser)
+    def do_place(self, arguments: Namespace) -> None:
+        """ Place object at specified location. """
+        try:
+            pose = self.arm.place_at_point(arguments.point, arguments.time)
+            self.log.info(pose)
+        except RuntimeError:
+            self.log.error('RuntimeError: Skipping move_to_point command.')
+
+    @staticmethod
+    def help_place() -> None:  # pragma: no cover
+        print(f'Place object at specified location. \n'
+              f'  First argument should be one of: \n'
+              f'    * --cart X Y Z \n'
+              f'    * --cyl R THETA Z \n'
+              f'    * --sphere R AZIMUTH THETA \n'
+              f'  Second argument should be time to move in milliseconds: \n'
+              f'    * -t TIME')
+
 
 def main() -> None:  # pragma: no cover
     logging.basicConfig(level=logging.INFO,

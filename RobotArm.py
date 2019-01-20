@@ -4,6 +4,7 @@ from itertools import count
 from serial import Serial
 from serial.serialutil import SerialException
 from typing import Callable, Dict, Iterator, Optional, Union
+from time import sleep
 
 from Point import Point
 from RobotState import RobotState
@@ -120,6 +121,48 @@ class RobotArm:
             self.send(pk.write_servo_move(vars(computed_state), time_ms))
             self.State = computed_state
         return self.State
+
+    def pick_at_point(self, point: Point, time_ms: int, finger_position: float):
+        start_coordinates = self.State.get_cartesian()
+        if start_coordinates[2] < 5:
+            start_z = start_coordinates[2] = 5
+        else:
+            start_z = start_coordinates[2]
+        elevated_point = Point(cartesian=[start_coordinates[0], start_coordinates[1], start_z])
+        target_cart_coordinates = point.cartesian
+        approach_point = Point(cartesian=[target_cart_coordinates[0], target_cart_coordinates[1], target_cart_coordinates[2] + 2])
+
+        # Move gripper up in z so as not to whack anything on movement
+        self.move_to_point(elevated_point, 1000, hand_position=90)
+        sleep(1)
+        # Move to a point above the target
+        self.move_to_point(approach_point, 1000, finger_position=finger_position - 40, hand_position=90)
+        sleep(1)
+        # Move gripper around target object
+        self.move_to_point(point, time_ms, finger_position=finger_position - 40, hand_position=90)
+        sleep(time_ms/1000)
+        # Close gripper
+        self.move_to_point(point, 1000, finger_position=finger_position, hand_position=90)
+        sleep(1)
+        # Pick up object 
+        self.move_to_point(approach_point, 1000)
+        return self.State
+
+    def place_at_point(self, point: Point, time_ms: int):
+        target_cart_coordinates = point.cartesian
+        approach_point = Point(cartesian=[target_cart_coordinates[0], target_cart_coordinates[1], target_cart_coordinates[2] + 2])   
+        # Move object above target location
+        self.move_to_point(approach_point, time_ms, hand_position=90)
+        sleep(time_ms/1000)
+        # Move object to target location
+        self.move_to_point(point, 1000, hand_position=90)
+        sleep(1)
+        # Release object
+        self.move_to_point(point, 1000, finger_position=self.State.fingers - 40, hand_position=90)
+        sleep(1)
+        # Move gripper above object
+        self.move_to_point(approach_point, 1000)
+        return self.State        
 
     def unlock_servos(self) -> None:
         self.send(pk.write_servo_unlock())

@@ -26,7 +26,7 @@ class TestRobotKinematics(unittest.TestCase):
 
         target_results = [
             RobotState({
-                'base': -45,
+                'base': 45,
                 'shoulder': -33.5549,
                 'elbow': 90.0,
                 'wrist': 90.0,
@@ -34,7 +34,7 @@ class TestRobotKinematics(unittest.TestCase):
                 'fingers': 0
             }),
             RobotState({
-                'base': 70,
+                'base': -70,
                 'shoulder': 33.5549,
                 'elbow': -90.0,
                 'wrist': -90.0,

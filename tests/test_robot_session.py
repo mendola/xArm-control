@@ -68,9 +68,11 @@ class TestRobotSession(snapshottest.TestCase):
         no_serial_session = self.no_serial_create()
         session = self.create()
 
-        test_command = '--cart 10 10 10 -t 150'
+        test_command = '--cart 10 10 10 -t 150 -f 20 --hand 90'
         test_point = Point(cartesian=(10, 10, 10))
         test_time = 150
+        test_fingers = 20
+        test_hand = 90
 
         # Act
         no_serial_session.do_move2point(test_command)
@@ -79,7 +81,7 @@ class TestRobotSession(snapshottest.TestCase):
             session.do_move2point(test_command)
 
             # Assert
-            self.assertEqual((test_point, test_time), mocked_move_to_point.call_args[0])
+            self.assertEqual((test_point, test_time, test_fingers, test_hand), mocked_move_to_point.call_args[0])
 
     # noinspection PyTypeChecker
     def test_approach(self):
