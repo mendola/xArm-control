@@ -23,13 +23,15 @@ conn, client_addr = sock.accept()
 
 
 print("Starting Camera loop")
-while True:
-    #print('\nwaiting to receive message')
-    #print('received {} bytes from {}'.format(len(data), address))
-    #print(data)
-
-    ret, frame = cap.read()
-    result, frame = cv2.imencode('.jpg', frame, encode_param)
-    data = pickle.dumps(frame, 0)
-    conn.sendall(struct.pack(">L", len(data))+data) ### new code
-cap.release()
+try:
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        result, frame = cv2.imencode('.jpg', frame, encode_param)
+        data = pickle.dumps(frame, 0)
+        conn.sendall(struct.pack(">L", len(data))+data) ### new code
+except:
+    print("Failure. Closing")
+    cap.release()
+    sock.close()
