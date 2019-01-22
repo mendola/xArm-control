@@ -125,7 +125,7 @@ class RobotArm:
     def pick_at_point(self, point: Point, time_ms: int, finger_position: float):
         start_coordinates = self.State.get_cartesian()
         if start_coordinates[2] < 5:
-            start_z = start_coordinates[2] = 5
+            start_z = 5
         else:
             start_z = start_coordinates[2]
         elevated_point = Point(cartesian=[start_coordinates[0], start_coordinates[1], start_z])
