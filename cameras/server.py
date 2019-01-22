@@ -10,8 +10,6 @@ import time
 # Create a UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 cap = cv2.VideoCapture(0)
-cap.set(3,320)
-cap.set(4,240)
 
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 
@@ -33,8 +31,5 @@ while True:
     ret, frame = cap.read()
     result, frame = cv2.imencode('.jpg', frame, encode_param)
     data = pickle.dumps(frame, 0)
-   # sock.sendto(data, address)
-    #sock.sendall(struct.pack(">L", len(data))+data) ### new code
-    sock.sendall(b'hello')
-    time.sleep(1)
+    conn.sendall(struct.pack(">L", len(data))+data) ### new code
 cap.release()
