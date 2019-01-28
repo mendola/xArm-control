@@ -3,7 +3,7 @@ import cv2
 import sys
 
 def take_image(fname):
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(1)
 
     cv2.namedWindow("test")
 
